@@ -1,0 +1,15 @@
+---
+title: "Project Proposal"
+subtitle: ""
+author: "Lab Group - Member 1, Member 2, Member 3, Member 4"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, comment = NA, 
+                      message = FALSE, warning = FALSE,
+                      fig.height=6, fig.width = 9, fig.align = "center")
+```
+
+Please adjust the title to something meaningful. Do not keep it as 
+"Project Proposal".
