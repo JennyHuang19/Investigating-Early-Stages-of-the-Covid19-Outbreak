@@ -17,25 +17,218 @@ knitr::opts_chunk$set(echo = FALSE, comment = NA,
 library(tidyverse)
 ```
 
+## Load and Clean Data
+```{r load data, echo = FALSE}
+covid <- read_csv("data/covid.csv")
+
+covid <- covid %>%
+  mutate(reporting_date = `reporting date`, visiting_wuhan = `visiting Wuhan`, 
+         from_wuhan = `from Wuhan`, 
+         if_onset_approximated = If_onset_approximated)%>%
+  select(id, reporting_date, location, country, gender, age, symptom_onset,
+         if_onset_approximated, hosp_visit_date, exposure_start, exposure_end, 
+         visiting_wuhan, from_wuhan, death, recovered, source)
+```
+
+```{r clean data, echo = FALSE}
+covid <- covid %>%
+  mutate(id = factor(id), if_onset_approximated = factor(if_onset_approximated), 
+         visiting_wuhan = factor(visiting_wuhan), 
+         from_wuhan = factor(from_wuhan), death = factor(death), 
+         recovered = factor(recovered))%>%
+  mutate(reporting_date = as.Date(reporting_date, "%m/%d/%Y"), 
+         symptom_onset = as.Date(symptom_onset, "%m/%d/%Y"), 
+         hosp_visit_date = as.Date(hosp_visit_date, "%m/%d/%Y"), 
+         exposure_start = as.Date(exposure_start, "%m/%d/%Y"), 
+         exposure_end = as.Date(exposure_end, "%m/%d/%Y")) %>%
+  mutate(death = ifelse(death == 1, "Yes", "No"), 
+         visiting_wuhan = ifelse(visiting_wuhan == 1, "Yes", "No"),
+         from_wuhan = ifelse(from_wuhan == 1, "Yes", "No"),
+         if_onset_approximated = ifelse(if_onset_approximated == 1, "Yes", "No"),
+         recovered = ifelse(recovered == 1, "Yes", "No"))
+```
+
+```{r add age group, echo = FALSE}
+covid <- covid %>%
+  mutate(age_group = ifelse(age < 20, "0-19", (ifelse(age <40, "20-39",
+  ifelse(age < 60, "40-59", ifelse(age < 80, "60-79", "80-99"))))))%>%
+  mutate(age_group = ifelse(is.na(age_group), "NA", age_group))
+```
+
 ## Introduction
 
 ## Data Analysis Plan
 
+Through our analysis, we will use death as our outcome variable by analyzing 
+the proportion of patients who have died, indicated by a value of “yes” for 
+death. To do so, we will use the following predictor variables: 
+age_group, gender, visited_wuhan, from_wuhan, country. 
+
+Using these variables, we will attempt to determine not only if age affects 
+one’s survival outcome due to COVID-19, but also if any of these other 
+characteristics are associated with one’s survival outcome. 
+
+To start, we will preform some preliminary exploratory data analysis to learn 
+more about our data.
+
+First, we will determine the death rate, proportion of those dead, of all 
+patients in our dataset. As we can see, there is a small percentage, about 4%, 
+of patients who died from COVID-19 in our data set. 
+```{r death rate}
+covid %>%
+  mutate(death = ifelse(death == "Yes", "Dead", "Alive"))%>%
+  count(death)%>% 
+  mutate(prop_dead = n / sum(n))
+```
+
+Now, we will visualize the ages of patients for each survival status.
+```{r age vs. survival status, fig.height=5, fig.width=5}
+covid %>%
+  mutate(death = ifelse(death == "Yes", "Dead", "Alive"))%>%
+  ggplot(mapping = aes(x = age, fill = death)) + 
+  geom_histogram(binwidth = 10, color = "black") +
+  facet_wrap( ~ death, ncol = 1) +
+  theme_bw() +
+  labs(title = "Age of Patient vs. Survival Status", x = "Age",
+       y = "Number of Patients", fill = "Survival Status")
+```
+
+Below is a summary table of the mean age of patients who have died from COVID-19
+and those that haven't, out of all patients in our data set that reported their 
+ages. As we can see, the average age of patients that have died is greater than 
+the average age of patients that are alive. These ages give us a reference 
+point to determine what age will be considered "old" and what ages will be 
+considered "young" for our exploratory data analysis.
+
+```{r mean age summary table}
+covid %>%
+  filter(!is.na(age)) %>%
+  mutate(death = ifelse(death == "Yes", "Dead", "Alive"))%>%
+  group_by(death)%>% 
+  summarise(mean_age = mean(age))%>% 
+  arrange(desc(mean_age))
+```
+
+To understand some of our other explanatory variables, we will calculate some 
+statistics to get a sense of our data in terms of gender, country, and patients 
+who have been to Wuhan recently. As we can see below, around 35% of patients 
+are femalee, 48% of patients are male and 17% of patients are not classified. 
+Noting that more male patients are included in our data set will be important 
+and helpful when performing our exploratory data analysis.
+
+```{r gender distribution}
+covid %>%
+  count(gender)%>% 
+  mutate(prop = n / sum(n))
+```
+
+Additionally, the patients in our data set come from 38 different countries.
+```{r country count}
+covid %>%
+  count(country)%>% 
+  mutate(total_countries = nrow(.))%>%
+  select(total_countries)%>%
+  slice(1:1)
+```
+
+However, as we can see below, there are only 3 countries with patients who have 
+died in our data set: China, Hong Kong, Taiwan. It will be helpful to know that 
+only 3 of the 38 total countries in our data set have reported deaths when we 
+consider the explanatory variable country in our exploratory data analysis.
+
+```{r age country summary table}
+covid %>%
+  count(country, death)%>% 
+  group_by(country)%>% 
+  mutate(prop_dead = n / sum(n))%>%
+  filter(death == "Yes")%>%
+  select(country, n, prop_dead)
+```
+
+Additionally, from the summary table below, we see the mean age of the patients 
+who have died for each country where there are reported deaths. In China, the 
+mean age is about 71. In Taiwan, the mean age is 65. In Hong Kong, the mean age 
+is about 54.
+
+```{r age per country}
+covid %>%
+  filter(!is.na(age)) %>%
+  group_by(country)%>% 
+  filter(death == "Yes") %>%
+  summarise(mean_death_age = mean(age))%>% 
+  arrange(desc(mean_death_age))
+```
+
+From the table below, we see the majority of patients included in our 
+data set are not from Wuhan, nor have they reported that they have previously 
+visited Wuhan. Even though the majority of patients in our data set are not from 
+or have been to Wuhan, it will be interesting to see if time in Wuhan is 
+associated with one's survival outcome.
+
+```{r wuhan distribution}
+covid %>%
+  count(from_wuhan)%>% 
+  mutate(prop = n / sum(n))%>%
+  select(from_wuhan, prop)
+
+covid %>%
+  count(visiting_wuhan)%>% 
+  mutate(prop = n / sum(n))%>%
+  select(visiting_wuhan, prop)
+```
+
+In our exploratory data analysis, we plan to use the following statistical 
+methods to answer some of these questions:
+
+a) Calculate the conditional probability of P(Death | Age) and determine if 
+there are any confounding variables: gender, visted_wuhan, from_wuhan, country.
+
+b) Take a bootstrap sample to estimate a confidence interval for the mean age 
+of affected individuals. If there are any confounding variables, we will 
+estimate the mean age of affected individuals faceted by the confounding 
+variables.
+
+c) Run a hypothesis test with significance level of .05 to assess claims 
+about potential associations between death rate and our explanatory variables.
+  Death Rate
+    - H0: The death rate for older individuals is less or equal to the death 
+          rate for younger individuals.
+    - H1: The death rate for older individuals is significantly higher than 
+          younger individuals.
+          
+      After running the hypothesis test, if we get a p-value < .05, then we 
+      will be able to reject that the death rate for older individuals is less
+      than or equal to the death rate for younger individuals.
+      
+  Wuhan
+    - H0: The death rate for those who have visited or lived in Wuhan is the 
+          same as the death rate for those that haven’t.
+    - H1: The death rate for those who have visited or lived in Wuhan is 
+          significantly different than those that haven’t.
+          
+      After running the hypothesis test, if we get a p-value < .05, then we 
+      will be able to reject that the death rate is the same for patients who 
+      have visited or lived in Wuhan as those that haven't.
+      
+  Gender
+    - H0: The death rate for women is the same as the death rate for men.
+    - H1: The death rate for women is different than the death rate for men.
+    
+      After running the hypothesis test, if we get a p-value < .05, then we 
+      will be able to reject that the death rate is the same for women patients
+      as it is for male patients.
+    
+d) Conduct a permutation test with significance level of .05 to determine if
+death rate and age are independent variables.
+    - H_0: Death rate and age group are independent.
+    - H_1: Death rate and age group are not independent. In fact, the death 
+           rate of older individuals is higher than the death rate of younger 
+           individuals.
+          
+      After running the hypothesis test, if we get a p-value < .05, then we 
+      will be able to reject that the death rate and age group are independent.
+
 ## Data
-
-```{r load data}
-covid <- read_csv("data/covid.csv")
-```
-
-```{r clean data}
-covid <- covid %>%
-  mutate(reporting_date = `reporting date`, visiting_wuhan = `visiting Wuhan`, from_wuhan = `from Wuhan`, if_onset_approximated = If_onset_approximated)%>%
-  select(id, reporting_date, location, country, gender, age, symptom_onset, if_onset_approximated, hosp_visit_date, exposure_start, exposure_end, visiting_wuhan, from_wuhan, death, recovered, source)
-
-covid <- covid %>%
-  mutate(id = factor(id), if_onset_approximated = factor(if_onset_approximated), visiting_wuhan = factor(visiting_wuhan), from_wuhan = factor(from_wuhan), death = factor(death), recovered = factor(recovered))%>%
-  mutate(reporting_date = as.Date(reporting_date, "%m/%d/%Y"), symptom_onset = as.Date(symptom_onset, "%m/%d/%Y"), hosp_visit_date = as.Date(hosp_visit_date, "%m/%d/%Y"), exposure_start = as.Date(exposure_start, "%m/%d/%Y"), exposure_end = as.Date(exposure_end, "%m/%d/%Y"))
-```
 
 ```{r glimpse-data}
 glimpse(covid)
