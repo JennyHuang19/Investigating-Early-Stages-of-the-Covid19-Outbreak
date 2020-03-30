@@ -37,3 +37,7 @@ covid <- covid %>%
   mutate(reporting_date = as.Date(reporting_date, "%m/%d/%Y"), symptom_onset = as.Date(symptom_onset, "%m/%d/%Y"), hosp_visit_date = as.Date(hosp_visit_date, "%m/%d/%Y"), exposure_start = as.Date(exposure_start, "%m/%d/%Y"), exposure_end = as.Date(exposure_end, "%m/%d/%Y"))
 ```
 
+```{r glimpse-data}
+glimpse(covid)
+```
+

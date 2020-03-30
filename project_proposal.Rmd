@@ -1,5 +1,5 @@
 ---
-title: "Project Proposal"
+title: "Investigating the COVID-19 Outbreak"
 subtitle: ""
 author: "Lab Group - Member 1, Member 2, Member 3, Member 4"
 output: pdf_document
@@ -11,5 +11,23 @@ knitr::opts_chunk$set(echo = FALSE, comment = NA,
                       fig.height=6, fig.width = 9, fig.align = "center")
 ```
 
-Please adjust the title to something meaningful. Do not keep it as 
-"Project Proposal".
+
+## Section 3: Data
+
+```{r load data}
+covid <- read_csv("data/covid.csv")
+```
+
+```{r clean data}
+covid <- covid %>%
+  mutate(reporting_date = `reporting date`, visiting_wuhan = `visiting Wuhan`, from_wuhan = `from Wuhan`, if_onset_approximated = If_onset_approximated)%>%
+  select(id, reporting_date, location, country, gender, age, symptom_onset, if_onset_approximated, hosp_visit_date, exposure_start, exposure_end, visiting_wuhan, from_wuhan, death, recovered, source)
+
+covid <- covid %>%
+  mutate(id = factor(id), if_onset_approximated = factor(if_onset_approximated), visiting_wuhan = factor(visiting_wuhan), from_wuhan = factor(from_wuhan), death = factor(death), recovered = factor(recovered))%>%
+  mutate(reporting_date = as.Date(reporting_date, "%m/%d/%Y"), symptom_onset = as.Date(symptom_onset, "%m/%d/%Y"), hosp_visit_date = as.Date(hosp_visit_date, "%m/%d/%Y"), exposure_start = as.Date(exposure_start, "%m/%d/%Y"), exposure_end = as.Date(exposure_end, "%m/%d/%Y"))
+```
+
+```{r glimpse-data}
+glimpse(covid)
+```
