@@ -131,10 +131,9 @@ covid %>%
   slice(1:1)
 ```
 
-However, as we can see below, there are only 3 countries with patients who have 
-died in our data set: China, Hong Kong, Taiwan. It will be helpful to know that 
-only 3 of the 38 total countries in our data set have reported deaths when we 
-consider the explanatory variable country in our exploratory data analysis.
+However, as we can see below, there are only 8 countries with patients who have 
+died in our data set. It will be helpful to know that only 3 of the 38 total 
+countries in our data set have reported deaths when we consider the explanatory variable country in our exploratory data analysis.
 
 ```{r age country summary table}
 covid %>%
