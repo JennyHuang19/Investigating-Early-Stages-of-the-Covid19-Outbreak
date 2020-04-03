@@ -20,6 +20,13 @@ library(infer)
 
 ## Section 1: Introduction
 
+Several recent reports suggest that older age groups show more severe symptoms in the face of COVID-19, causing the virus to be more deadly for older age groups. We want to test whether this is true by comparing the death rate of older individuals to the death rate of younger individuals. Our null hypothesis (H0 ) is that the death rate for older individuals is the same as the death rate for younger individuals, while our alternative hypothesis (H1) is that the death rate for older individuals is higher than that of younger individuals. 
+
+We plan on working with the data from the early stages of the COVID-19 outbreak from 1/20/2020 to 2/15/2020. This dataset, from Kaggle, was first extracted from information provided by Johns Hopkins University. Johns Hopkins University collected this data from the World Health Organization, the Center for Disease Control and Prevention, the European Centre for Disease Prevention and Control, the National Health Commission of the People’s Republic of China, among other state and national government health departments. Each observation in the dataset is a case in which an individual tested positive for COVID-19. The variables include the ID number of the individual, the number that the case is in the country, the date the case was reported, the location of the case, the gender of the individual, the age of the individual, the age group of the individual, the date of the onset of symptoms, the date of the hospital visit, the start and end dates of exposure to the virus, if the individual visited Wuhan, if the individual was from Wuhan, if the patient died, and if the patient recovered. 
+
+Link to Data: https://www.kaggle.com/sudalairajkumar/novel-corona-virus-2019-dataset#COVID19_line_list_data.csv
+
+
 ## Section 2: Data Analysis Plan
 
 Through our analysis, we will use death as our outcome variable by analyzing 
