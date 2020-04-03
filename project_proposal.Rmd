@@ -170,7 +170,8 @@ covid %>%
   group_by(country) %>% 
   mutate(prop_dead = n / sum(n)) %>%
   filter(death == "Yes")%>%
-  select(country, n, prop_dead)
+  mutate(people_dead = n)%>%
+  select(country, people_dead, prop_dead)
 ```
 
 Additionally, from the summary table below, we see the mean age of the patients 
@@ -219,13 +220,11 @@ variables.
 c) To answer the question of whether age_group is associated with death rate, 
 we will be using simulation via bootstrap. 
 
-For each age_group, we will take bootstrap samples, 
-calculate the mean death rate, and obtain a 95% confidence interval 
-for the mean death rate of that particular age group. If the confidence 
-intervals for the mean death rates do not overlap, we can conclude that 
-the mean death rate for the older age group is significantly different 
-from the mean death rate of the younger age group. 
-
+For each age_group, we will take bootstrap samples, calculate the mean death 
+rate, and obtain a 95% confidence interval for the mean death rate of that 
+particular age group. If the confidence intervals for the mean death rates do 
+not overlap, we can conclude that the mean death rate for the older age group 
+is significantly different from the mean death rate of the younger age group. 
 
 ```{r ci-young-age}
 covid_young_age <- covid %>%
@@ -244,8 +243,8 @@ boot_dist_young %>%
             upper_bound = quantile(stat, 0.975))
 ```
 
-We are 95% confident that the true mean death rate of the population 
-age 20-39 is between the range of (0.03668033 and 0.06598361).
+We are 95% confident that the true mean death rate of the population age 20-39 
+is between the range of (0.03668033 and 0.06598361).
 
 ```{r ci-old-age}
 covid_old_age <- covid %>%
@@ -272,7 +271,6 @@ significant difference between the mean death rate of individuals in the
 lower and upper end of the confidence interval for the older age group 
 (0.04545455 and 0.1590909) is higher than the interval for the younger age 
 group (0.03668033 and 0.06598361).
-
 
 In addition to age, we will repeat this process for the other
 explanatory variables: gender, country, visited_wuhan, and from_wuhan.
