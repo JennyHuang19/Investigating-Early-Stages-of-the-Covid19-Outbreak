@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = FALSE, comment = NA,
 ```{r load-packages}
 library(tidyverse)
 library(broom)
+library(infer)
 ```
 
 
@@ -36,7 +37,7 @@ more about our data.
 First, we will determine the death rate, proportion of those dead, of all 
 patients in our dataset. As we can see, there is a small percentage, about 4%, 
 of patients who died from COVID-19 in our data set. 
-```{r death rate}
+```{r death-rate}
 covid %>%
   mutate(death = ifelse(death == "Yes", "Dead", "Alive"))%>%
   count(death)%>% 
@@ -45,7 +46,7 @@ covid %>%
 
 Now, we will visualize the ages of patients for each survival status.
 
-```{r age vs. survival status, fig.height=5, fig.width=5}
+```{r age-vs.-survival-status, fig.height=5, fig.width=5}
 covid %>%
   mutate(death = ifelse(death == "Yes", "Dead", "Alive"))%>%
   ggplot(mapping = aes(x = age, fill = death)) + 
@@ -63,7 +64,7 @@ the average age of patients that are alive. These ages give us a reference
 point to determine what age will be considered "old" and what ages will be 
 considered "young" for our exploratory data analysis.
 
-```{r mean age summary table}
+```{r mean-age-summary-table}
 covid %>%
   filter(!is.na(age)) %>%
   mutate(death = ifelse(death == "Yes", "Dead", "Alive"))%>%
@@ -78,14 +79,14 @@ are female, 48% of patients are male and 17% of patients are not classified.
 Noting that more male patients are included in our data set will be important 
 and helpful when performing our exploratory data analysis.
 
-```{r gender distribution}
+```{r gender-distribution}
 covid %>%
   count(gender)%>% 
   mutate(prop = n / sum(n))
 ```
 
 Additionally, the patients in our data set come from 38 different countries.
-```{r country count}
+```{r country-count}
 covid %>%
   count(country)%>% 
   mutate(total_countries = nrow(.))%>%
@@ -98,11 +99,11 @@ died in our data set: China, Hong Kong, Taiwan. It will be helpful to know that
 only 3 of the 38 total countries in our data set have reported deaths when we 
 consider the explanatory variable country in our exploratory data analysis.
 
-```{r age country summary table}
+```{r age-country-summary-table}
 covid %>%
-  count(country, death)%>% 
-  group_by(country)%>% 
-  mutate(prop_dead = n / sum(n))%>%
+  count(country, death) %>% 
+  group_by(country) %>% 
+  mutate(prop_dead = n / sum(n)) %>%
   filter(death == "Yes")%>%
   select(country, n, prop_dead)
 ```
@@ -112,7 +113,7 @@ who have died for each country where there are reported deaths. In China, the
 mean age is about 71. In Taiwan, the mean age is 65. In Hong Kong, the mean age 
 is about 54.
 
-```{r age per country}
+```{r age-per-country}
 covid %>%
   filter(!is.na(age)) %>%
   group_by(country)%>% 
@@ -127,7 +128,7 @@ visited Wuhan. Even though the majority of patients in our data set are not
 from or have been to Wuhan, it will be interesting to see if time in Wuhan is 
 associated with one's survival outcome.
 
-```{r wuhan distribution}
+```{r wuhan-distribution}
 covid %>%
   count(from_wuhan) %>% 
   mutate(prop = n / sum(n)) %>%
@@ -160,6 +161,54 @@ intervals for the mean death rates do not overlap, we can conclude that
 the mean death rate for the older age group is significantly different 
 from the mean death rate of the younger age group. 
 
+
+```{r ci-young-age}
+covid_young_age <- covid %>%
+  filter(age_group == "20-39") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_young <- covid_young_age %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+boot_dist_young %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+```
+
+We are 95% confident that the true mean death rate of the population 
+age 20-39 is between the range of (0.03668033 and 0.06598361).
+
+```{r ci-young-age}
+covid_old_age <- covid %>%
+  filter(age_group == "80-99") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_old <- covid_old_age %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+boot_dist_old %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+```
+We are 95% confident that the true mean death rate of the population 
+age 80-99 is between the range of (0.04545455 and 0.1590909).
+
+Since the two confidence intervals overlap, we cannot claim that there is
+significant difference between the mean death rate of individuals in the 
+80-99 age group with those in 20-39 age group. However, both the 
+lower and upper end of the confidence interval for the older age group 
+(0.04545455 and 0.1590909) is higher than the interval for the younger age 
+group (0.03668033 and 0.06598361).
+
+
 In addition to age, we will repeat this process for the other
 explanatory variables: gender, country, visited_wuhan, and from_wuhan.
 
@@ -178,6 +227,7 @@ m_ldeath_age %>%
   tidy() %>%
   select(term, estimate)
 ```
+
 ```{r r-squared-age-model}
 m_ldeath_age %>% 
   glance() %>% 
@@ -190,7 +240,8 @@ ggplot(covid_age, mapping = aes(x = age, y = log(death_rate))) +
   geom_smooth(method='lm') +
   labs(title = "Death Rate across Age", x = "Age", y = "Log Death Rate" )
 ```
-From this visualization, we can see that death rate seems to peak around 
+
+From this visualization, we can see that death rate peaks around 
 age 60.
 
 After creating logistic regression models for each variable, we will determine
@@ -203,11 +254,11 @@ with the highest adjusted R^2 using backwards elimination.
 
 ## Section 3: Data
 
-```{r load data}
+```{r load-data}
 covid <- read_csv("data/covid.csv")
 ```
 
-```{r clean data}
+```{r clean-data}
 covid <- covid %>%
   mutate(reporting_date = `reporting date`, visiting_wuhan = `visiting Wuhan`, 
          from_wuhan = `from Wuhan`, 
