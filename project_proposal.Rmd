@@ -17,7 +17,7 @@ library(broom)
 library(infer)
 ```
 
-## Section 3: Data
+## Cleaning Data
 
 ```{r load-data}
 covid <- read_csv("data/covid.csv")
@@ -48,11 +48,6 @@ covid <- covid %>%
   mutate(age_group = ifelse(age < 20, "0-19", (ifelse(age <40, "20-39",
   ifelse(age < 60, "40-59", ifelse(age < 80, "60-79", "80-99"))))))%>%
   mutate(age_group = ifelse(is.na(age_group), "NA", age_group))
-```
-
-The dimensions of our dataset are 1,085 rows by 16 columns.
-```{r glimpse-data}
-glimpse(covid)
 ```
 
 ## Section 1: Introduction
@@ -313,4 +308,11 @@ P-value for each coefficient.
 
 Then, we can use AIC/BIC model selection criteria to select for a model 
 with the highest adjusted R^2 using backwards elimination.
+
+##Section 3: Data
+The dimensions of our dataset are 1,085 rows by 16 columns.
+```{r glimpse-data}
+glimpse(covid)
+```
+
       

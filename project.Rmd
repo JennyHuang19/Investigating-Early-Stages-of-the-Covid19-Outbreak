@@ -76,7 +76,7 @@ patients in our dataset. As we can see, there is a small percentage, about 4%,
 of patients who died from COVID-19 in our data set. 
 ```{r death rate}
 covid %>%
-  mutate(death = ifelse(death == "Yes", "Dead", "Alive"))%>%
+  mutate(death = ifelse(death == 1, "Dead", "Alive"))%>%
   count(death)%>% 
   mutate(prop_dead = n / sum(n))
 ```
