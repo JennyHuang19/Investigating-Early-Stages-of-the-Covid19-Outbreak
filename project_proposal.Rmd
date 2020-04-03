@@ -11,6 +11,12 @@ knitr::opts_chunk$set(echo = FALSE, comment = NA,
                       fig.height=6, fig.width = 9, fig.align = "center")
 ```
 
+```{r load-packages}
+library(tidyverse)
+library(broom)
+```
+
+
 ## Section 1: Introduction
 
 ## Section 2: Data Analysis Plan
@@ -38,6 +44,7 @@ covid %>%
 ```
 
 Now, we will visualize the ages of patients for each survival status.
+
 ```{r age vs. survival status, fig.height=5, fig.width=5}
 covid %>%
   mutate(death = ifelse(death == "Yes", "Dead", "Alive"))%>%
@@ -64,11 +71,10 @@ covid %>%
   summarise(mean_age = mean(age))%>% 
   arrange(desc(mean_age))
 ```
-
 To understand some of our other explanatory variables, we will calculate some 
 statistics to get a sense of our data in terms of gender, country, and patients 
 who have been to Wuhan recently. As we can see below, around 35% of patients 
-are femalee, 48% of patients are male and 17% of patients are not classified. 
+are female, 48% of patients are male and 17% of patients are not classified. 
 Noting that more male patients are included in our data set will be important 
 and helpful when performing our exploratory data analysis.
 
@@ -123,13 +129,13 @@ associated with one's survival outcome.
 
 ```{r wuhan distribution}
 covid %>%
-  count(from_wuhan)%>% 
-  mutate(prop = n / sum(n))%>%
+  count(from_wuhan) %>% 
+  mutate(prop = n / sum(n)) %>%
   select(from_wuhan, prop)
 
 covid %>%
-  count(visiting_wuhan)%>% 
-  mutate(prop = n / sum(n))%>%
+  count(visiting_wuhan) %>% 
+  mutate(prop = n / sum(n)) %>%
   select(visiting_wuhan, prop)
 ```
 
@@ -137,52 +143,63 @@ In our exploratory data analysis, we plan to use the following statistical
 methods to answer some of these questions:
 
 a) Calculate the conditional probability of P(Death | Age) and determine if 
-there are any confounding variables: gender, visted_wuhan, from_wuhan, country.
+there are any confounding variables: gender, visited_wuhan, from_wuhan, country.
 
 b) Take a bootstrap sample to estimate a confidence interval for the mean age 
 of affected individuals. If there are any confounding variables, we will 
 estimate the mean age of affected individuals faceted by the confounding 
 variables.
 
-c) Run a hypothesis test with significance level of .05 to assess claims 
-about potential associations between death rate and our explanatory variables.
-  Death Rate
-    - H0: The death rate for older individuals is less or equal to the death 
-          rate for younger individuals.
-    - H1: The death rate for older individuals is significantly higher than 
-          younger individuals.
-          
-      After running the hypothesis test, if we get a p-value < .05, then we 
-      will be able to reject that the death rate for older individuals is less
-      than or equal to the death rate for younger individuals.
+c) To answer the question of whether age_group is associated with death rate, 
+we will be using simulation via bootstrap. 
+
+For each age_group, we will take bootstrap samples, 
+calculate the mean death rate, and obtain a 95% confidence interval 
+for the mean death rate of that particular age group. If the confidence 
+intervals for the mean death rates do not overlap, we can conclude that 
+the mean death rate for the older age group is significantly different 
+from the mean death rate of the younger age group. 
+
+In addition to age, we will repeat this process for the other
+explanatory variables: gender, country, visited_wuhan, and from_wuhan.
+
+d) Another way we will measure whether the explanatory variable age, gender,
+visited_wuhan, from_wuhan, and country are significant determiners of death 
+rate is by creating logistic regression models. 
+
+```{r logistic-regression}
+covid_age <- covid %>%
+  filter(age <= 80) %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+m_ldeath_age <- lm(log(death_rate) ~ age, data = covid_age)
+m_ldeath_age %>%
+  tidy() %>%
+  select(term, estimate)
+```
+```{r r-squared-age-model}
+m_ldeath_age %>% 
+  glance() %>% 
+  pull(r.squared)
+```
+
+```{r visualize-age-model, fig.height = 5, fig.width = 5}
+ggplot(covid_age, mapping = aes(x = age, y = log(death_rate))) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  labs(title = "Death Rate across Age", x = "Age", y = "Log Death Rate" )
+```
+From this visualization, we can see that death rate seems to peak around 
+age 60.
+
+After creating logistic regression models for each variable, we will determine
+whether each variable is significant in influencing death rates by looking at
+P-value for each coefficient.
+
+Then, we can use AIC/BIC model selection criteria to select for a model 
+with the highest adjusted R^2 using backwards elimination.
       
-  Wuhan
-    - H0: The death rate for those who have visited or lived in Wuhan is the 
-          same as the death rate for those that haven’t.
-    - H1: The death rate for those who have visited or lived in Wuhan is 
-          significantly different than those that haven’t.
-          
-      After running the hypothesis test, if we get a p-value < .05, then we 
-      will be able to reject that the death rate is the same for patients who 
-      have visited or lived in Wuhan as those that haven't.
-      
-  Gender
-    - H0: The death rate for women is the same as the death rate for men.
-    - H1: The death rate for women is different than the death rate for men.
-    
-      After running the hypothesis test, if we get a p-value < .05, then we 
-      will be able to reject that the death rate is the same for women patients
-      as it is for male patients.
-    
-d) Conduct a permutation test with significance level of .05 to determine if
-death rate and age are independent variables.
-    - H_0: Death rate and age group are independent.
-    - H_1: Death rate and age group are not independent. In fact, the death 
-           rate of older individuals is higher than the death rate of younger 
-           individuals.
-          
-      After running the hypothesis test, if we get a p-value < .05, then we 
-      will be able to reject that the death rate and age group are independent.
 
 ## Section 3: Data
 
