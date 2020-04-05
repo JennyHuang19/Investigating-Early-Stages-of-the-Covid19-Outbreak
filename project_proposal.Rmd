@@ -77,7 +77,8 @@ symptoms, the date of the hospital visit, the start and end dates of exposure
 to the virus, if the individual visited Wuhan, if the individual was from 
 Wuhan, if the patient died, and if the patient recovered. 
 
-Link to Data: https://www.kaggle.com/sudalairajkumar/novel-corona-virus-2019-dataset#COVID19_line_list_data.csv
+Link to Data: https://www.kaggle.com/sudalairajkumar/novel-corona-virus-2019-
+dataset#COVID19_line_list_data.csv
 
 
 ## Section 2: Data Analysis Plan
@@ -346,7 +347,7 @@ of the younger age group, we see that the probability of observing a sample
 mean the same or greater than that of the estimated mean for the older age 
 group is very low.
 
-```{r graph-null-dist-young, fig.height = 5, fig.width = 5}
+```{r graph-null-dist-young, fig.height = 5, fig.width = 6}
 visualize(young_null_dist) +
   shade_p_value(obs_stat = old_boot_mean, direction = "greater") +
   theme_minimal(base_size = 16)
