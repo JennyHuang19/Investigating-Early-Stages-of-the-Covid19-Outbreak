@@ -1,6 +1,6 @@
 ---
 title: "Investigating the COVID-19 Outbreak"
-subtitle: ""
+subtitle: "Mon April 6th"
 author: "Team 2!: Delaney Demark, Jenny Huang, Abby Mapes, Harshavardhan Srijay"
 output: pdf_document
 ---
