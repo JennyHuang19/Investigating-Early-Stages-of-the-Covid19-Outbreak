@@ -310,7 +310,7 @@ P-value for each coefficient.
 Then, we can use AIC/BIC model selection criteria to select for a model 
 with the highest adjusted R^2 using backwards elimination.
 
-##Section 3: Data
+## Section 3: Data
 The dimensions of our dataset are 1,085 rows by 16 columns.
 ```{r glimpse-data}
 glimpse(covid)
