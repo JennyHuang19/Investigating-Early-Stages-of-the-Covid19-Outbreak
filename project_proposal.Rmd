@@ -392,7 +392,7 @@ m_ldeath_age %>%
 ```
 
 ```{r visualize-age-model, fig.height = 5, fig.width = 5}
-ggplot(covid_age, mapping = aes(x = age, y = log(death_rate))) +
+ggplot(covid_age, mapping = aes(x = age, y = death_rate)) +
   geom_point() +
   geom_smooth(method='lm') +
   labs(title = "Death Rate across Age", x = "Age", y = "Log Death Rate" )
@@ -415,12 +415,51 @@ ggplot(m_ldeath_age_aug, mapping = aes(x = .fitted, y = .resid)) +
 From seeing a parabolic pattern in the residual plot, we know that the
 linearity assumption is violated, so a linear fit would not be the best model.
 
+Created the diagnostic plot function in order to check assumptions.
+
+```{r plot_diagnostic_function}
+plot_diagnostic <- function(x) {
+  
+  plot_variance <- augment(x) %>% 
+    ggplot(aes(x = .fitted, y = .resid)) +
+    geom_point() +
+    geom_hline(yintercept = 0, color = "red", lty = 2) +
+    labs(x = expression(hat(y)), y = "Residual") +
+    theme_minimal(base_size = 16)
+  
+  plot_normality <- augment(x) %>% 
+    ggplot(aes(x = .resid)) +
+    geom_histogram(binwidth = 50, alpha = 0.5, color = "Red") +
+    labs(x = "Residual value", y = "Count") +
+    theme_minimal(base_size = 16)
+  
+  plot_independence <- augment(lm_volume_full) %>% 
+    ggplot(aes(x = 1:nrow(covid_age), y = .resid)) +
+    geom_point() +
+    labs(x = "Index", y = "Residual") +
+    theme_minimal(base_size = 16)
+    
+  plot_variance / (plot_normality + plot_independence)
+}
+```
+
+```{r use_plot_diagnostic}
+plot_diagnostic(x = m_ldeath_age_aug)
+```
+
 We will create logistic regression models for each variable, then determine
 whether each variable is significant in influencing death rates by looking at
 P-value for each coefficient.
 
 Finally, we will use AIC/BIC model selection criteria to select for a model 
 with the highest adjusted R^2 using backwards elimination.
+
+
+Notes in regards to failing linearity assumption:
+-fit logistic regression model on the original variable. 
+(response = health outcome)
+-or transform the age.
+-knn classification on death (quantitative predictors)
 
 ## Section 3: Data
 The dimensions of our dataset are 1,085 rows by 16 columns.
