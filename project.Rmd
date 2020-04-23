@@ -11,41 +11,36 @@ knitr::opts_chunk$set(echo = FALSE, comment = NA,
                       fig.height=6, fig.width = 9, fig.align = "center")
 ```
 
-## Packages
-
-```{r packages, warning = FALSE, message = FALSE}
+```{r load-packages}
 library(tidyverse)
+library(broom)
+library(infer)
 ```
 
-## Load and Clean Data
-```{r load data, echo = FALSE}
-covid <- read_csv("data/covid.csv")
+## Cleaning Data
 
+```{r load-data}
+covid <- read_csv("data/covid.csv")
+```
+
+```{r clean-data}
 covid <- covid %>%
   mutate(reporting_date = `reporting date`, visiting_wuhan = `visiting Wuhan`, 
          from_wuhan = `from Wuhan`, 
          if_onset_approximated = If_onset_approximated)%>%
-  select(id, reporting_date, location, country, gender, age, symptom_onset,
-         if_onset_approximated, hosp_visit_date, exposure_start, exposure_end, 
+  select(id, reporting_date, location, country, gender, age, symptom_onset, if_onset_approximated, hosp_visit_date, exposure_start, exposure_end, 
          visiting_wuhan, from_wuhan, death, recovered, source)
-```
 
-```{r clean data, echo = FALSE}
 covid <- covid %>%
   mutate(id = factor(id), if_onset_approximated = factor(if_onset_approximated), 
          visiting_wuhan = factor(visiting_wuhan), 
-         from_wuhan = factor(from_wuhan), death = factor(death), 
-         recovered = factor(recovered))%>%
+         from_wuhan = factor(from_wuhan), death = factor(death), recovered = factor(recovered))%>%
   mutate(reporting_date = as.Date(reporting_date, "%m/%d/%Y"), 
          symptom_onset = as.Date(symptom_onset, "%m/%d/%Y"), 
          hosp_visit_date = as.Date(hosp_visit_date, "%m/%d/%Y"), 
          exposure_start = as.Date(exposure_start, "%m/%d/%Y"), 
-         exposure_end = as.Date(exposure_end, "%m/%d/%Y")) %>%
-  mutate(death = ifelse(death == 1, "Yes", "No"), 
-         visiting_wuhan = ifelse(visiting_wuhan == 1, "Yes", "No"),
-         from_wuhan = ifelse(from_wuhan == 1, "Yes", "No"),
-         if_onset_approximated = ifelse(if_onset_approximated == 1, "Yes", "No"),
-         recovered = ifelse(recovered == 1, "Yes", "No"))
+         exposure_end = as.Date(exposure_end, "%m/%d/%Y"),
+         death = ifelse(death == 0, "No", "Yes"))
 ```
 
 ```{r add age group, echo = FALSE}
@@ -55,9 +50,38 @@ covid <- covid %>%
   mutate(age_group = ifelse(is.na(age_group), "NA", age_group))
 ```
 
-## Introduction
+## Section 1: Introduction
 
-## Data Analysis Plan
+Several recent reports suggest that older age groups show more severe symptoms 
+in the face of COVID-19, causing the virus to be more deadly for older age 
+groups. We want to test whether this is true by comparing the death rate of 
+older individuals to the death rate of younger individuals. Our null 
+hypothesis (H0 ) is that the death rate for older individuals is the same as 
+the death rate for younger individuals, while our alternative hypothesis (H1) 
+is that the death rate for older individuals is higher than that of younger 
+individuals. 
+
+We plan on working with the data from the early stages of the COVID-19 
+outbreak from 1/20/2020 to 2/15/2020. This data set, from Kaggle, was first 
+extracted from information provided by Johns Hopkins University. Johns 
+Hopkins University collected this data from the World Health Organization, 
+the Center for Disease Control and Prevention, the European Centre for Disease 
+Prevention and Control, the National Health Commission of the People’s 
+Republic of China, among other state and national government health 
+departments. Each observation in the data set is a case in which an individual 
+tested positive for COVID-19. The variables include the ID number of the 
+individual, the number that the case is in the country, the date the case was 
+reported, the location of the case, the gender of the individual, the age of 
+the individual, the age group of the individual, the date of the onset of 
+symptoms, the date of the hospital visit, the start and end dates of exposure 
+to the virus, if the individual visited Wuhan, if the individual was from 
+Wuhan, if the patient died, and if the patient recovered. 
+
+Link to Data: https://www.kaggle.com/sudalairajkumar/novel-corona-virus-2019-
+dataset#COVID19_line_list_data.csv
+
+
+## Section 2: Data Analysis Plan
 
 Through our analysis, we will use death as our outcome variable by analyzing 
 the proportion of patients who have died, indicated by a value of “yes” for 
@@ -72,17 +96,46 @@ To start, we will preform some preliminary exploratory data analysis to learn
 more about our data.
 
 First, we will determine the death rate, proportion of those dead, of all 
-patients in our dataset. As we can see, there is a small percentage, about 4%, 
+patients in our dataset. As we can see, there is a small percentage, about 6%, 
 of patients who died from COVID-19 in our data set. 
-```{r death rate}
+
+```{r death-rate}
 covid %>%
-  mutate(death = ifelse(death == 1, "Dead", "Alive"))%>%
+  mutate(death = ifelse(death == "No", "Alive", "Dead"))%>%
   count(death)%>% 
   mutate(prop_dead = n / sum(n))
 ```
 
-Now, we will visualize the ages of patients for each survival status.
-```{r age vs. survival status, fig.height=5, fig.width=5}
+Now, we will look at the survival rate by age group.
+
+```{r death-rate-by-age}
+covid %>%
+  mutate(death = ifelse(death == "No", "Alive", "Dead")) %>%
+  group_by(age_group) %>% 
+  count(death)%>% 
+  mutate(prop_dead = n / sum(n))
+```
+The death rate is lowest for the 20-39 age group
+while highest for the 80-99 age group. Older age
+groups, then, tend to have a higher death rate.
+
+Now, we will visualize survival status faceted by age_group.
+
+```{r survival-status-by-age, fig.height=5, fig.width=5}
+covid %>%
+  mutate(death = ifelse(death == "Yes", "Dead", "Alive")) %>%
+  filter(age_group != "NA") %>% 
+  ggplot(mapping = aes(x = death, fill = death)) + 
+  geom_bar(stat = "count") +
+  facet_wrap( ~ age_group, ncol = 3) +
+  theme_bw() +
+  labs(title = "Survival Status By Age", x = "Survival Status",
+       y = "Number of Patients", fill = "Survival Status")
+```
+
+We will also visualize the ages of patients for each survival status.
+
+```{r age-vs-survival-status, fig.height=5, fig.width=5}
 covid %>%
   mutate(death = ifelse(death == "Yes", "Dead", "Alive"))%>%
   ggplot(mapping = aes(x = age, fill = death)) + 
@@ -100,7 +153,7 @@ the average age of patients that are alive. These ages give us a reference
 point to determine what age will be considered "old" and what ages will be 
 considered "young" for our exploratory data analysis.
 
-```{r mean age summary table}
+```{r mean-age-summary-table}
 covid %>%
   filter(!is.na(age)) %>%
   mutate(death = ifelse(death == "Yes", "Dead", "Alive"))%>%
@@ -108,22 +161,21 @@ covid %>%
   summarise(mean_age = mean(age))%>% 
   arrange(desc(mean_age))
 ```
-
 To understand some of our other explanatory variables, we will calculate some 
 statistics to get a sense of our data in terms of gender, country, and patients 
 who have been to Wuhan recently. As we can see below, around 35% of patients 
-are femalee, 48% of patients are male and 17% of patients are not classified. 
+are female, 48% of patients are male and 17% of patients are not classified. 
 Noting that more male patients are included in our data set will be important 
 and helpful when performing our exploratory data analysis.
 
-```{r gender distribution}
+```{r gender-distribution}
 covid %>%
   count(gender)%>% 
   mutate(prop = n / sum(n))
 ```
 
 Additionally, the patients in our data set come from 38 different countries.
-```{r country count}
+```{r country-count}
 covid %>%
   count(country)%>% 
   mutate(total_countries = nrow(.))%>%
@@ -131,25 +183,31 @@ covid %>%
   slice(1:1)
 ```
 
-However, as we can see below, there are only 8 countries with patients who have 
-died in our data set. It will be helpful to know that only 3 of the 38 total 
-countries in our data set have reported deaths when we consider the explanatory variable country in our exploratory data analysis.
+However, as we can see below, 8 countries in our dataset have at least 1 
+reported death, with China having the most number of deaths by a significant
+margin, as of the date of our dataset. It will be helpful to know that 
+only 8 of the 38 total countries in our data set have reported deaths when we 
+consider the explanatory variable 'country' in our exploratory data analysis.
 
-```{r age country summary table}
+```{r age-country-summary-table}
 covid %>%
-  count(country, death)%>% 
-  group_by(country)%>% 
-  mutate(prop_dead = n / sum(n))%>%
+  count(country, death) %>% 
+  group_by(country) %>% 
+  mutate(prop_dead = n / sum(n)) %>%
   filter(death == "Yes")%>%
-  select(country, n, prop_dead)
+  mutate(people_dead = n)%>%
+  select(country, people_dead, prop_dead)
 ```
 
 Additionally, from the summary table below, we see the mean age of the patients 
 who have died for each country where there are reported deaths. In China, the 
 mean age is about 71. In Taiwan, the mean age is 65. In Hong Kong, the mean age 
-is about 54.
+is about 54. However, since there were less than ten recorded deaths in 
+countries other than China, the use of country as a predictor may yield
+misleading results, so we plan to group the categories into "China" and 
+"Other Countries."
 
-```{r age per country}
+```{r age-per-country}
 covid %>%
   filter(!is.na(age)) %>%
   group_by(country)%>% 
@@ -160,76 +218,531 @@ covid %>%
 
 From the table below, we see the majority of patients included in our 
 data set are not from Wuhan, nor have they reported that they have previously 
-visited Wuhan. Even though the majority of patients in our data set are not from 
-or have been to Wuhan, it will be interesting to see if time in Wuhan is 
+visited Wuhan. Even though the majority of patients in our data set are not 
+from or have been to Wuhan, it will be interesting to see if time in Wuhan is 
 associated with one's survival outcome.
 
-```{r wuhan distribution}
+```{r wuhan-distribution}
 covid %>%
-  count(from_wuhan)%>% 
-  mutate(prop = n / sum(n))%>%
+  count(from_wuhan) %>% 
+  mutate(prop = n / sum(n)) %>%
   select(from_wuhan, prop)
 
 covid %>%
-  count(visiting_wuhan)%>% 
-  mutate(prop = n / sum(n))%>%
+  count(visiting_wuhan) %>% 
+  mutate(prop = n / sum(n)) %>%
   select(visiting_wuhan, prop)
 ```
 
-In our exploratory data analysis, we plan to use the following statistical 
-methods to answer some of these questions:
+We plan to use the following statistical methods to answer our 
+research questions about whether age_group, gender, country, 
+visited_wuhan, from_wuhan play a role in 
+variable death rate:
 
-a) Calculate the conditional probability of P(Death | Age) and determine if 
-there are any confounding variables: gender, visted_wuhan, from_wuhan, country.
+a) Calculate the conditional probability of P(Death | Age) to determine if 
+there are any confounding variables: gender, visited_wuhan, from_wuhan, country.
+We will also keep in mind that the conclusions we draw about death rate may be 
+confounded with variables that are not included in our dataset, 
+such as smoking/drinking status, chronic disease status, BMI, etc.
 
-b) Take a bootstrap sample to estimate a confidence interval for the mean age 
-of affected individuals. If there are any confounding variables, we will 
-estimate the mean age of affected individuals faceted by the confounding 
-variables.
+b) Use estimation via bootstrap to create a confidence interval 
+for the mean age of affected individuals:
 
-c) Run a hypothesis test with significance level of .05 to assess claims 
-about potential associations between death rate and our explanatory variables.
-  Death Rate
-    - H0: The death rate for older individuals is less or equal to the death 
-          rate for younger individuals.
-    - H1: The death rate for older individuals is significantly higher than 
-          younger individuals.
-          
-      After running the hypothesis test, if we get a p-value < .05, then we 
-      will be able to reject that the death rate for older individuals is less
-      than or equal to the death rate for younger individuals.
-      
-  Wuhan
-    - H0: The death rate for those who have visited or lived in Wuhan is the 
-          same as the death rate for those that haven’t.
-    - H1: The death rate for those who have visited or lived in Wuhan is 
-          significantly different than those that haven’t.
-          
-      After running the hypothesis test, if we get a p-value < .05, then we 
-      will be able to reject that the death rate is the same for patients who 
-      have visited or lived in Wuhan as those that haven't.
-      
-  Gender
-    - H0: The death rate for women is the same as the death rate for men.
-    - H1: The death rate for women is different than the death rate for men.
+For each age_group, we will take bootstrap samples, calculate the mean death 
+rate, and obtain a 95% confidence interval for the mean death rate of that 
+particular age group. If the confidence intervals for the mean death rates do 
+not overlap, we can conclude that the mean death rate for the older age group 
+is significantly different from the mean death rate of the younger age group. 
+
+If there are any confoundingvariables, we will estimate the mean age 
+of affected individuals faceted by the confounding variables.
+
+
+```{r ci-young-age}
+covid_young_age <- covid %>%
+  filter(age_group == "20-39") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_young <- covid_young_age %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+boot_dist_young %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+```
+
+We are 95% confident that the true mean death rate of the population age 20-39 
+is between the range of (0.03668033 and 0.06598361).
+
+```{r ci-old-age}
+covid_old_age <- covid %>%
+  filter(age_group == "80-99") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_old <- covid_old_age %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+boot_dist_old %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+```
+We are 95% confident that the true mean death rate of the population 
+age 80-99 is between the range of (0.04545455 and 0.1590909).
+
+Since the two confidence intervals overlap, we cannot claim that there is
+significant difference between the mean death rate of individuals in the 
+80-99 age group with those in 20-39 age group. However, both the 
+lower and upper end of the confidence interval for the older age group 
+(0.04545455 and 0.1590909) is higher than the interval for the younger age 
+group (0.03668033 and 0.06598361).
+
+We will repeat this process by determining the role of other explanatory 
+variables on death rate: gender, country, visited_wuhan, and from_wuhan.
+
+c) To get more information than seeing whether the confidence intervals overlap, 
+we will use simulation-based hypothesis testing to give the exact probability 
+estimate (p-value) for the alternate hypothesis.
+
+H0: µ(death rate of young age group) = µ(death rate of old age group)
+H1: µ(death rate of young age group) < µ(death rate of old age group)
+
+By using the bootstrap distribution, we will see where the elderly mean 
+death rate lies on the null distribution for the young mean death rate. 
+
+First, we estimate the mean death rate among the older age group through
+using bootstrap estimation.
+
+```{r null-dist-old}
+old_bootstrap <- covid_old_age %>%
+  specify(response = death_rate) %>%
+  generate(reps = 15000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+
+old_boot_mean <- old_bootstrap %>%
+  summarise(mean = mean(stat)) %>% 
+  pull()
+old_boot_mean
+```
+
+Next, we create a null distribution for the mean death rate of the younger 
+age group.
+
+```{r null-dist-young}
+young_null_dist <- covid_young_age %>%
+  specify(response = death_rate) %>%
+  generate(reps = 15000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+
+By graphing the sample mean for the older age group on the null distribution 
+of the younger age group, we see that the probability of observing a sample 
+mean the same or greater than that of the estimated mean for the older age 
+group is very low.
+
+```{r graph-null-dist-young, fig.height = 5, fig.width = 6}
+visualize(young_null_dist) +
+  shade_p_value(obs_stat = old_boot_mean, direction = "greater") +
+  theme_minimal(base_size = 16)
+```
+
+We confirm this by doing a hypothesis test and getting the p_value,
+which comes out to be 6.666667e-05. Therefore, the probability of seeing a mean
+death rate of 0.09094273 (the sample mean death rate of the older age group) 
+for the younger age group is approximately zero.
+
+```{r perform-hypothesis-test}
+p_value <- covid_young_age %>%
+  specify(response = death_rate) %>%
+  generate(reps = 15000, type = "bootstrap") %>%
+  calculate(stat = "mean") %>% 
+  get_p_value(obs_stat = old_boot_mean, direction = "greater")
+```
+
+Thus, with an alpha level of 0.05, we have sufficient evidence to reject 
+the null hypothesis that the mean death rate for the age group "80-99" is equal
+to the mean death rate of age group "20-39." 
+
+d) A final way we will measure whether the explanatory variables are significant 
+determiners of death rate is by creating logistic regression models. 
+
+```{r logistic-regression}
+covid_age <- covid %>%
+  filter(age <= 80) %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+m_ldeath_age <- lm(log(death_rate) ~ age, data = covid_age)
+m_ldeath_age %>%
+  tidy() %>%
+  select(term, estimate)
+```
+
+```{r r-squared-age-model}
+m_ldeath_age %>% 
+  glance() %>% 
+  pull(r.squared)
+```
+
+```{r visualize-age-model, fig.height = 5, fig.width = 5}
+ggplot(covid_age, mapping = aes(x = age, y = death_rate)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  labs(title = "Death Rate across Age", x = "Age", y = "Log Death Rate" )
+```
+
+From this visualization, we can see that death rate peaks around 
+age 60. This may be because of the small number of patients who are 
+over 70.
+
+Since the graph does not seem to follow a linear pattern, we will check whether
+a linear fit is appropriate using a residual plot.
+
+```{r residual-plot, fig.height = 5, fig.width = 5}
+m_ldeath_age_aug <- augment(m_ldeath_age)
+ggplot(m_ldeath_age_aug, mapping = aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "blue", lty = 2) +
+  labs(x = "Predicted death rate", y = "Residuals") + theme_minimal()
+```
+From seeing a parabolic pattern in the residual plot, we know that the
+linearity assumption is violated, so a linear fit would not be the best model.
+
+Created the diagnostic plot function in order to check assumptions.
+
+```{r plot_diagnostic_function}
+plot_diagnostic <- function(x) {
+  
+  plot_variance <- augment(x) %>% 
+    ggplot(aes(x = .fitted, y = .resid)) +
+    geom_point() +
+    geom_hline(yintercept = 0, color = "red", lty = 2) +
+    labs(x = expression(hat(y)), y = "Residual") +
+    theme_minimal(base_size = 16)
+  
+  plot_normality <- augment(x) %>% 
+    ggplot(aes(x = .resid)) +
+    geom_histogram(binwidth = 50, alpha = 0.5, color = "Red") +
+    labs(x = "Residual value", y = "Count") +
+    theme_minimal(base_size = 16)
+  
+  plot_independence <- augment(lm_volume_full) %>% 
+    ggplot(aes(x = 1:nrow(covid_age), y = .resid)) +
+    geom_point() +
+    labs(x = "Index", y = "Residual") +
+    theme_minimal(base_size = 16)
     
-      After running the hypothesis test, if we get a p-value < .05, then we 
-      will be able to reject that the death rate is the same for women patients
-      as it is for male patients.
-    
-d) Conduct a permutation test with significance level of .05 to determine if
-death rate and age are independent variables.
-    - H_0: Death rate and age group are independent.
-    - H_1: Death rate and age group are not independent. In fact, the death 
-           rate of older individuals is higher than the death rate of younger 
-           individuals.
-          
-      After running the hypothesis test, if we get a p-value < .05, then we 
-      will be able to reject that the death rate and age group are independent.
+  plot_variance / (plot_normality + plot_independence)
+}
+```
 
-## Data
+```{r use_plot_diagnostic}
+plot_diagnostic(x = m_ldeath_age_aug)
+```
 
+We will create logistic regression models for each variable, then determine
+whether each variable is significant in influencing death rates by looking at
+P-value for each coefficient.
+
+Finally, we will use AIC/BIC model selection criteria to select for a model 
+with the highest adjusted R^2 using backwards elimination.
+
+
+Notes in regards to failing linearity assumption:
+-fit logistic regression model on the original variable. 
+(response = health outcome)
+-or transform the age.
+-knn classification on death (quantitative predictors)
+
+## Section 3: Data
+The dimensions of our dataset are 1,085 rows by 16 columns.
 ```{r glimpse-data}
 glimpse(covid)
 ```
 
+## Section 4: Methods and Results
+
+## I. Conditional Probabilities
+First, we will calculate the conditional probability of P(Death | Age) for 
+each age group and determine if there are any confounding variables: 
+gender, visited_wuhan, from_wuhan, country. Below, we calculate and visualize 
+P(Dead|Age Group). From the visualization, we see that P(Dead|Age Group) 
+increases as the age groups increase. For this part, we will filter out any 
+patients with unrecorded ages in our data set, as we will not be able to take 
+these into consideration with calculating P(Death | Age). 
+
+```{r P(Dead|AgeGroup), fig.height=5, fig.width=5}
+covid_condprob <- covid %>%
+  filter(!is.na(age_group))%>%
+  filter(!is.na(death))%>%
+  filter(age_group != "NA")
+
+covid_condprob %>%
+  count(age_group, death)%>% 
+  group_by(age_group)%>% 
+  mutate(prop_dead = n / sum(n))%>%
+  select(age_group, death, prop_dead)
+
+ggplot(covid_condprob, mapping = aes(x = age_group, fill = death)) + 
+  geom_bar(position = "fill") +
+  labs(y = "", x = "Age Group", fill = "Survival Status", title =
+         "Survival Outcome by Age Group")
+```
+
+Now, we will divide the observations in our data by gender, allowing us to 
+consider gender as a possible explanation of our data. As seen in the 
+calculation and visualization of P(Dead|Age Group) for each gender, just as 
+we saw in the visualization above, P(Dead|Age Group) increases as the age 
+groups increase for both men and women. Thus, gender doesn't seem to act as a
+confounding variable that is correlated with both the explanatory and response 
+variables.
+
+```{r P(Dead|AgeGroup)_gender, fig.height=5, fig.width=5}
+covid_condprob %>%
+  filter(!is.na(gender))%>%
+  count(gender, age_group, death)%>% 
+  group_by(gender, age_group)%>% 
+  mutate(prop_dead = n / sum(n))%>%
+  select(age_group, death, gender, prop_dead)
+
+covid_condprob %>%
+  filter(!is.na(gender))%>%
+ggplot(mapping = aes(x = age_group, fill = death)) + 
+  geom_bar(position = "fill") +
+  facet_wrap(.~ gender)+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
+  labs(y = "", x = "Age Group", fill = "Survival Status", title =
+         "Survival Outcome by Age Group by Gender")
+```
+
+Now, we will divide the patients in our dataset by whether or not the 
+patient has visited Wuhan recently, allowing us to consider visiting Wuhan as a 
+possible explanation of our data. As seen in the calculation and visualization 
+of P(Dead|Age Group), P(Dead|Age Group) increases as the age groups increase for 
+patients that have not visited Wuhan. For patients that haven't visited 
+Wuhan, P(Dead|Age Group) is 0. However, as we saw in our exploratory data 
+analysis (Section 2), only 18% of patients in our data set had indicated that 
+they had visited Wuhan recently and the other 82% indicated that they had not. 
+Of the 18% of patients who indicated that they had visited Wuhan recently, 
+only 1 of them died. So, we don't have many data points to 
+calculate P(Dead|Age Group) for patients that have visited Wuhan recently, so 
+we can't determine whether visiting wuhan acts as a confounding variable 
+that is correlated with both the explanatory and response variables.
+
+```{r P(Dead|AgeGroup)_visited_wuhan, fig.height=5, fig.width=5}
+covid_condprob %>%
+  count(visiting_wuhan, age_group, death)%>% 
+  group_by(visiting_wuhan, age_group)%>% 
+  mutate(prop_dead = n / sum(n))%>%
+  select(age_group, death, visiting_wuhan, prop_dead)
+
+covid_condprob %>%
+ggplot(mapping = aes(x = age_group, fill = death)) + 
+  geom_bar(position = "fill") +
+  facet_wrap(.~ visiting_wuhan)+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
+  labs(y = "", x = "Age Group", fill = "Survival Status", title =
+         "Survival Outcome by Visiting Wuhan")
+```
+
+Now, we will divide the patients in our dataset by whether or not the 
+patient lives in Wuhan, allowing us to consider visiting Wuhan as a possible 
+explanation of our data. As seen in the calculation and visualization of 
+P(Dead|Age Group) below, P(Dead|Age Group) increases as the age groups increase 
+for patients that live in Wuhan and patients that don't live in Wuhan. 
+Interestingly, for patients that live in Wuhan, P(Dead|Age Group) is higher 
+for all age groups over 40 years old than for patients that don't live in 
+Wuhan. For 80-99 year old patients in our dataset, 100% of them who live in 
+Wuhan have died, while only 17% of them who don't live in Wuhan have died. 
+Keep in mind, the majority of patients in our data set are not from Wuhan and 
+only 14% indicated that they lived in Wuhan. However, all 11 of the 80-99 year 
+old patients from Wuhan died while only 5 of the 24 80-99 year old patients 
+who were not from Wuhan died. 
+
+```{r P(Dead|AgeGroup)_from_wuhan, fig.height=5, fig.width=5}
+covid_condprob %>%
+  filter(!is.na(from_wuhan))%>%
+  count(from_wuhan, age_group, death)%>% 
+  group_by(from_wuhan, age_group)%>% 
+  mutate(prop_dead = n / sum(n))%>%
+  select(age_group, death, from_wuhan, n, prop_dead)
+
+covid_condprob %>%
+  filter(!is.na(from_wuhan))%>%
+ggplot(mapping = aes(x = age_group, fill = death)) + 
+  geom_bar(position = "fill") +
+  facet_wrap(.~ from_wuhan)+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
+  labs(y = "", x = "Age Group", fill = "Survival Status", title =
+         "Survival Outcome by Living in Wuhan")
+```
+
+Now, we will divide the patients in our data by country, allowing us to 
+consider country of origin as a possible explanation of our data. We will only 
+consider countries with recorded deaths in our data set. Note: we filtered 
+any patients with unrecorded ages, these deaths are not included. As seen in 
+the calculation and visualization of P(Dead|Age Group) for each country below, 
+P(Dead|Age) for each country group never decreases as age increeases. However, 
+we do not have enough data for each country to properly visualze P(Dead|Age) 
+for each country and consider country of origin as a possible explanation of 
+our data. 
+
+```{r P(Dead|AgeGroup)_country, fig.height=5, fig.width=5}
+countries_w_deaths <- covid %>%
+  count(country, death) %>% 
+  group_by(country) %>% 
+  filter(death == "Yes")%>%
+  pull(country)
+
+covid_condprob %>%
+  filter(country == countries_w_deaths)%>%
+  count(country, age_group, death)%>% 
+  group_by(country, age_group)%>% 
+  mutate(prop_dead = n / sum(n))%>%
+  select(age_group, death, country, prop_dead)
+
+covid_condprob %>%
+  filter(country == countries_w_deaths)%>%
+ggplot(mapping = aes(x = age_group, fill = death)) + 
+  geom_bar(position = "fill") +
+  facet_wrap(.~ country)+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
+  labs(y = "", x = "Age Group", fill = "Survival Status", title =
+         "Survival Outcome by Country 
+with Recorded Deaths")
+```
+
+Ulitmately, a patient's gender, whether they visited Wuhan recently, whehter 
+they live in Wuhan, and what country they are from doesn't seem to affect the 
+association between a patient's age group and their survival status from 
+COVID-19.
+
+## II. Mean Age of Affected Individuals
+
+Now, we will create a 95% confidence interval for the population mean age of 
+individuals infected with COVID-19, the population mean age of those infected 
+with COVID-19 who survive, and the population mean age of those infected with
+COVID-19 who die. To do so, we must assume that our sample is representative 
+of the population. Additionally, in all three cases, there are more than 
+5 observations in our original sample, since our data includes 1085 total 
+infected patients, 1022 alive patients, and 63 dead patients, so, our original 
+sample is greater than 5 for all cases, so it is not too small. Since our 
+original sample is not too small and is representative of the population, 
+we can create a bootstrap confidence interval.
+
+First, we will create a 95% confidence interval for the population mean age of 
+individuals infected with COVID-19. As seen below, we are 95% confident that 
+the actual population mean age of infected individuals is between 
+48.30 and	50.73.
+
+```{r age_conf_int_total, fig.height=5, fig.width=5}
+age_boot_dist <- covid %>%
+  #filter(death == "No") %>%
+  specify(response = age) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+  
+ 
+percentile_ci <- age_boot_dist %>% 
+  summarize(lower_bound = quantile(stat, 0.025),
+           upper_bound = quantile(stat, 0.975))
+
+percentile_ci
+
+visualize(age_boot_dist) +
+ shade_confidence_interval(endpoints = percentile_ci) +
+ labs(title = "Bootstrap distribution of Mean Age 
+      of Infected Patients",
+      x = "Mean", y = "Count",
+      caption = "Green lines represent 95% C.I. bounds") +
+ theme_minimal(base_size = 16)
+```
+
+Now, we will create a 95% confidence interval for the population mean age of 
+individuals infected with COVID-19 who survive. As seen below, we are 95% 
+confident that the actual population mean age of infected individuals who 
+survive COVID-19 is between 46.82 and 49.30.	
+
+
+```{r age_conf_int_alive, fig.height=5, fig.width=5}
+age_boot_dist_alive <- covid %>%
+  filter(death == "No") %>%
+  specify(response = age) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+  
+ 
+percentile_ci_alive <- age_boot_dist_alive %>% 
+  summarize(lower_bound = quantile(stat, 0.025),
+           upper_bound = quantile(stat, 0.975))
+
+percentile_ci_alive
+
+visualize(age_boot_dist_alive) +
+ shade_confidence_interval(endpoints = percentile_ci_alive, color = "blue",
+                           fill = "blue") +
+ labs(title = "Bootstrap distribution of Mean Age 
+of Infected Patients who Survive",
+      x = "Mean", y = "Count",
+      caption = "Blue lines represent 95% C.I. bounds") +
+ theme_minimal(base_size = 16)
+```
+
+Now, we will create a 95% confidence interval for the population mean age of 
+individuals infected with COVID-19 who die. As seen below, we are 95% 
+confident that the actual population mean age of infected individuals who 
+die from COVID-19 is between 65.13 and 71.98.		
+
+```{r age_conf_int_dead, fig.height=5, fig.width=5}
+age_boot_dist_dead <- covid %>%
+  filter(death == "Yes") %>%
+  specify(response = age) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+  
+ 
+percentile_ci_dead <- age_boot_dist_dead %>% 
+  summarize(lower_bound = quantile(stat, 0.025),
+           upper_bound = quantile(stat, 0.975))
+
+percentile_ci_dead
+
+visualize(age_boot_dist_dead) +
+ shade_confidence_interval(endpoints = percentile_ci_dead, color = "red",
+                           fill = "red") +
+ labs(title = "Bootstrap distribution of Mean Age 
+of Infected Patients who Die",
+      x = "Mean", y = "Count",
+      caption = "Red lines represent 95% C.I. bounds") +
+ theme_minimal(base_size = 16)
+```
+
+From the three 95% confidence intervals calculated above, we observe that the 
+95% confidence interval for the true mean age of infected individuals who 
+survive is the lowest, overlapping a year with the 95% confidence interval for 
+the true mean age of all infected individuals. The 95% confidence interval for 
+the true mean age of infected individuals who die is about 15 years higher than 
+the other two intervals. 
+
+## III. Association between Age Group and Death Rate
+
+
+
+## IV. Modeling Death Rate
+
+
+## Section 5: Discussion
+
+
+- II: mean age CI
+    interval for those infected is closer to interval to those that survive
+    isn't the case that just older people are infected, those that are infected 
+    usually survive but of those infected the ones who are older are the ones 
+    that die (?)
