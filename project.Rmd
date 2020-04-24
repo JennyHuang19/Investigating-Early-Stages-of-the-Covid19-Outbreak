@@ -1088,11 +1088,22 @@ consistent with the trend of males having higher death rates. From the accuracy
 of the classifier (90%) we created from our model, we determined that the 
 variables of interest are good predictors of death.
 
-There were several missing values present among each of the variables of 
-interest. Given that we filtered out these "NA" values before creating the 
-logistic model, we have to consider that the incompleteness of the data we 
-are working with makes our model is less valid and representative of the true 
-scenario.
+Classification using logistic regression is appropriate here, as our response
+variable (death) is categorical and our predictors include both categorical
+and continuous variables. The conditions to perform logistic regression are
+that the observations are independent of one another and that the predictors 
+are not highly correlated. Given the nature of disease spread, we cannot be 
+certain that our observations are independent from one another, because one case 
+could have caused another. Furthermore, there may be some correlation between 
+the predictors "from_wuhan" and "visited_wuhan", because people who visit wuhan 
+are likely to be from regions near Wuhan. These above-mentioned factors may 
+lower the reliability of our coefficient estimates.
+
+Finally, there were several missing values present among each of the 
+variables of interest. Given that we filtered out these "NA" values before 
+creating the logistic model, we have to consider that the incompleteness of the 
+data we are working with makes our model is less valid and representative of the 
+true situation.
 
 
 ## V. Confidence Intervals for Each Age Group
