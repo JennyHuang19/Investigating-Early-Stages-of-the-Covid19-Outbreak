@@ -1017,6 +1017,26 @@ than the upper end of the confidence intervals for any other age group.
 
 ## Section 5: Discussion
 
+#### Summary
+
+In the early stages of our data analysis, we found that the death rates for 
+each age group increased as the ages increased, so we explored the impact of a 
+variety of variables on the death rate per age group. For each of the potential 
+explanatory variables, we analyzed the proportion of patients that died, 
+grouping them by the categories of the variable. First, we investigated whether 
+gender was a possible confounding variable to explain the increase in death 
+rates among the age groups. Upon, examining the proportions of dead patients 
+per age group faceted by gender,  it became clear that the gender was not a 
+confounding variable. Although we wanted to determine if patients visiting 
+Wuhan had an impact on the death rate, only 18% of patients indicated that they 
+had visited Wuhan, so the data for this relationship was insufficient to reach 
+any conclusions. Next, we looked into the impact of the patients living in 
+Wuhan on the survival rate within each age group; we found that the death rate 
+among patients living in Wuhan was higher than those not living in Wuhan for 
+age groups above 40. Again, the limitations of the data set prevented us from 
+concluding any significant impact the country of the case could have on the 
+death rate. Therefore, we found that living in Wuhan had the greatest impact on 
+the death rates within each age group. 
 
 - II: mean age CI
     interval for those infected is closer to interval to those that survive
