@@ -492,7 +492,7 @@ covid_condprob %>%
 
 ggplot(covid_condprob, mapping = aes(x = age_group, fill = death)) + 
   geom_bar(position = "fill") +
-  labs(y = "", x = "Age Group", fill = "Survival Status", title =
+  labs(y = "", x = "Age Group", fill = "Dead", title =
          "Survival Outcome by Age Group")
 ```
 
@@ -518,7 +518,7 @@ ggplot(mapping = aes(x = age_group, fill = death)) +
   geom_bar(position = "fill") +
   facet_wrap(.~ gender)+
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
-  labs(y = "", x = "Age Group", fill = "Survival Status", title =
+  labs(y = "", x = "Age Group", fill = "Dead", title =
          "Survival Outcome by Age Group by Gender")
 ```
 
@@ -548,7 +548,7 @@ ggplot(mapping = aes(x = age_group, fill = death)) +
   geom_bar(position = "fill") +
   facet_wrap(.~ visiting_wuhan)+
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
-  labs(y = "", x = "Age Group", fill = "Survival Status", title =
+  labs(y = "", x = "Age Group", fill = "Dead", title =
          "Survival Outcome by Visiting Wuhan")
 ```
 
@@ -580,7 +580,7 @@ ggplot(mapping = aes(x = age_group, fill = death)) +
   geom_bar(position = "fill") +
   facet_wrap(.~ from_wuhan)+
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
-  labs(y = "", x = "Age Group", fill = "Survival Status", title =
+  labs(y = "", x = "Age Group", fill = "Dead", title =
          "Survival Outcome by Living in Wuhan")
 ```
 
@@ -614,7 +614,7 @@ ggplot(mapping = aes(x = age_group, fill = death)) +
   geom_bar(position = "fill") +
   facet_wrap(.~ country)+
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
-  labs(y = "", x = "Age Group", fill = "Survival Status", title =
+  labs(y = "", x = "Age Group", fill = "Dead", title =
          "Survival Outcome by Country 
 with Recorded Deaths")
 ```
