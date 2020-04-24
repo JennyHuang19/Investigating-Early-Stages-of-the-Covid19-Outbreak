@@ -1,6 +1,6 @@
 ---
 title: "Investigating the COVID-19 Outbreak"
-subtitle: ""
+subtitle: "Mon April 6th"
 author: "Team 2!: Delaney Demark, Jenny Huang, Abby Mapes, Harshavardhan Srijay"
 output: pdf_document
 ---
@@ -77,7 +77,8 @@ symptoms, the date of the hospital visit, the start and end dates of exposure
 to the virus, if the individual visited Wuhan, if the individual was from 
 Wuhan, if the patient died, and if the patient recovered. 
 
-Link to Data: https://www.kaggle.com/sudalairajkumar/novel-corona-virus-2019-dataset#COVID19_line_list_data.csv
+Link to Data: https://www.kaggle.com/sudalairajkumar/novel-corona-virus-2019-
+dataset#COVID19_line_list_data.csv
 
 
 ## Section 2: Data Analysis Plan
@@ -97,6 +98,7 @@ more about our data.
 First, we will determine the death rate, proportion of those dead, of all 
 patients in our dataset. As we can see, there is a small percentage, about 6%, 
 of patients who died from COVID-19 in our data set. 
+
 ```{r death-rate}
 covid %>%
   mutate(death = ifelse(death == "No", "Alive", "Dead"))%>%
@@ -104,7 +106,34 @@ covid %>%
   mutate(prop_dead = n / sum(n))
 ```
 
-Now, we will visualize the ages of patients for each survival status.
+Now, we will look at the survival rate by age group.
+
+```{r death-rate-by-age}
+covid %>%
+  mutate(death = ifelse(death == "No", "Alive", "Dead")) %>%
+  group_by(age_group) %>% 
+  count(death)%>% 
+  mutate(prop_dead = n / sum(n))
+```
+The death rate is lowest for the 20-39 age group
+while highest for the 80-99 age group. Older age
+groups, then, tend to have a higher death rate.
+
+Now, we will visualize survival status faceted by age_group.
+
+```{r survival-status-by-age, fig.height=5, fig.width=5}
+covid %>%
+  mutate(death = ifelse(death == "Yes", "Dead", "Alive")) %>%
+  filter(age_group != "NA") %>% 
+  ggplot(mapping = aes(x = death, fill = death)) + 
+  geom_bar(stat = "count") +
+  facet_wrap( ~ age_group, ncol = 3) +
+  theme_bw() +
+  labs(title = "Survival Status By Age", x = "Survival Status",
+       y = "Number of Patients", fill = "Survival Status")
+```
+
+We will also visualize the ages of patients for each survival status.
 
 ```{r age-vs-survival-status, fig.height=5, fig.width=5}
 covid %>%
@@ -173,7 +202,10 @@ covid %>%
 Additionally, from the summary table below, we see the mean age of the patients 
 who have died for each country where there are reported deaths. In China, the 
 mean age is about 71. In Taiwan, the mean age is 65. In Hong Kong, the mean age 
-is about 54.
+is about 54. However, since there were less than ten recorded deaths in 
+countries other than China, the use of country as a predictor may yield
+misleading results, so we plan to group the categories into "China" and 
+"Other Countries."
 
 ```{r age-per-country}
 covid %>%
@@ -202,25 +234,29 @@ covid %>%
   select(visiting_wuhan, prop)
 ```
 
-In our exploratory data analysis, we plan to use the following statistical 
-methods to answer some of these questions:
+We plan to use the following statistical methods to answer our 
+research questions about whether age_group, gender, country, 
+visited_wuhan, from_wuhan play a role in 
+variable death rate:
 
-a) Calculate the conditional probability of P(Death | Age) and determine if 
+a) Calculate the conditional probability of P(Death | Age) to determine if 
 there are any confounding variables: gender, visited_wuhan, from_wuhan, country.
+We will also keep in mind that the conclusions we draw about death rate may be 
+confounded with variables that are not included in our dataset, 
+such as smoking/drinking status, chronic disease status, BMI, etc.
 
-b) Take a bootstrap sample to estimate a confidence interval for the mean age 
-of affected individuals. If there are any confounding variables, we will 
-estimate the mean age of affected individuals faceted by the confounding 
-variables.
-
-c) To answer the question of whether age_group is associated with death rate, 
-we will be using simulation via bootstrap. 
+b) Use estimation via bootstrap to create a confidence interval 
+for the mean age of affected individuals:
 
 For each age_group, we will take bootstrap samples, calculate the mean death 
 rate, and obtain a 95% confidence interval for the mean death rate of that 
 particular age group. If the confidence intervals for the mean death rates do 
 not overlap, we can conclude that the mean death rate for the older age group 
 is significantly different from the mean death rate of the younger age group. 
+
+If there are any confoundingvariables, we will estimate the mean age 
+of affected individuals faceted by the confounding variables.
+
 
 ```{r ci-young-age}
 covid_young_age <- covid %>%
@@ -268,12 +304,74 @@ lower and upper end of the confidence interval for the older age group
 (0.04545455 and 0.1590909) is higher than the interval for the younger age 
 group (0.03668033 and 0.06598361).
 
-In addition to age, we will repeat this process for the other
-explanatory variables: gender, country, visited_wuhan, and from_wuhan.
+We will repeat this process by determining the role of other explanatory 
+variables on death rate: gender, country, visited_wuhan, and from_wuhan.
 
-d) Another way we will measure whether the explanatory variable age, gender,
-visited_wuhan, from_wuhan, and country are significant determiners of death 
-rate is by creating logistic regression models. 
+c) To get more information than seeing whether the confidence intervals overlap, 
+we will use simulation-based hypothesis testing to give the exact probability 
+estimate (p-value) for the alternate hypothesis.
+
+H0: µ(death rate of young age group) = µ(death rate of old age group)
+H1: µ(death rate of young age group) < µ(death rate of old age group)
+
+By using the bootstrap distribution, we will see where the elderly mean 
+death rate lies on the null distribution for the young mean death rate. 
+
+First, we estimate the mean death rate among the older age group through
+using bootstrap estimation.
+
+```{r null-dist-old}
+old_bootstrap <- covid_old_age %>%
+  specify(response = death_rate) %>%
+  generate(reps = 15000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+
+old_boot_mean <- old_bootstrap %>%
+  summarise(mean = mean(stat)) %>% 
+  pull()
+old_boot_mean
+```
+
+Next, we create a null distribution for the mean death rate of the younger 
+age group.
+
+```{r null-dist-young}
+young_null_dist <- covid_young_age %>%
+  specify(response = death_rate) %>%
+  generate(reps = 15000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+
+By graphing the sample mean for the older age group on the null distribution 
+of the younger age group, we see that the probability of observing a sample 
+mean the same or greater than that of the estimated mean for the older age 
+group is very low.
+
+```{r graph-null-dist-young, fig.height = 5, fig.width = 6}
+visualize(young_null_dist) +
+  shade_p_value(obs_stat = old_boot_mean, direction = "greater") +
+  theme_minimal(base_size = 16)
+```
+
+We confirm this by doing a hypothesis test and getting the p_value,
+which comes out to be 6.666667e-05. Therefore, the probability of seeing a mean
+death rate of 0.09094273 (the sample mean death rate of the older age group) 
+for the younger age group is approximately zero.
+
+```{r perform-hypothesis-test}
+p_value <- covid_young_age %>%
+  specify(response = death_rate) %>%
+  generate(reps = 15000, type = "bootstrap") %>%
+  calculate(stat = "mean") %>% 
+  get_p_value(obs_stat = old_boot_mean, direction = "greater")
+```
+
+Thus, with an alpha level of 0.05, we have sufficient evidence to reject 
+the null hypothesis that the mean death rate for the age group "80-99" is equal
+to the mean death rate of age group "20-39." 
+
+d) A final way we will measure whether the explanatory variables are significant 
+determiners of death rate is by creating logistic regression models. 
 
 ```{r logistic-regression}
 covid_age <- covid %>%
@@ -294,21 +392,74 @@ m_ldeath_age %>%
 ```
 
 ```{r visualize-age-model, fig.height = 5, fig.width = 5}
-ggplot(covid_age, mapping = aes(x = age, y = log(death_rate))) +
+ggplot(covid_age, mapping = aes(x = age, y = death_rate)) +
   geom_point() +
   geom_smooth(method='lm') +
   labs(title = "Death Rate across Age", x = "Age", y = "Log Death Rate" )
 ```
 
 From this visualization, we can see that death rate peaks around 
-age 60.
+age 60. This may be because of the small number of patients who are 
+over 70.
 
-After creating logistic regression models for each variable, we will determine
+Since the graph does not seem to follow a linear pattern, we will check whether
+a linear fit is appropriate using a residual plot.
+
+```{r residual-plot, fig.height = 5, fig.width = 5}
+m_ldeath_age_aug <- augment(m_ldeath_age)
+ggplot(m_ldeath_age_aug, mapping = aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "blue", lty = 2) +
+  labs(x = "Predicted death rate", y = "Residuals") + theme_minimal()
+```
+From seeing a parabolic pattern in the residual plot, we know that the
+linearity assumption is violated, so a linear fit would not be the best model.
+
+Created the diagnostic plot function in order to check assumptions.
+
+```{r plot_diagnostic_function}
+plot_diagnostic <- function(x) {
+  
+  plot_variance <- augment(x) %>% 
+    ggplot(aes(x = .fitted, y = .resid)) +
+    geom_point() +
+    geom_hline(yintercept = 0, color = "red", lty = 2) +
+    labs(x = expression(hat(y)), y = "Residual") +
+    theme_minimal(base_size = 16)
+  
+  plot_normality <- augment(x) %>% 
+    ggplot(aes(x = .resid)) +
+    geom_histogram(binwidth = 50, alpha = 0.5, color = "Red") +
+    labs(x = "Residual value", y = "Count") +
+    theme_minimal(base_size = 16)
+  
+  plot_independence <- augment(lm_volume_full) %>% 
+    ggplot(aes(x = 1:nrow(covid_age), y = .resid)) +
+    geom_point() +
+    labs(x = "Index", y = "Residual") +
+    theme_minimal(base_size = 16)
+    
+  plot_variance / (plot_normality + plot_independence)
+}
+```
+
+```{r use_plot_diagnostic}
+plot_diagnostic(x = m_ldeath_age_aug)
+```
+
+We will create logistic regression models for each variable, then determine
 whether each variable is significant in influencing death rates by looking at
 P-value for each coefficient.
 
-Then, we can use AIC/BIC model selection criteria to select for a model 
+Finally, we will use AIC/BIC model selection criteria to select for a model 
 with the highest adjusted R^2 using backwards elimination.
+
+
+Notes in regards to failing linearity assumption:
+-fit logistic regression model on the original variable. 
+(response = health outcome)
+-or transform the age.
+-knn classification on death (quantitative predictors)
 
 ## Section 3: Data
 The dimensions of our dataset are 1,085 rows by 16 columns.
