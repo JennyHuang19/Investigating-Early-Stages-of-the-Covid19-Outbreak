@@ -736,8 +736,140 @@ null hypothesis. This means that there is a significant difference in proportion
 of deaths between people from Wuhan and people not from Wuhan. This confirms
 our findings using confidence intervals.
 
-## IV. Modeling Death Rate
+## IV. Logistic Modeling
 
+## V. Confidence Intervals for Each Age Group
+Now, for each age group, we will take bootstrap samples, calculate the mean 
+death rate, and obtain a 95% confidence interval for the true mean death rate 
+of that particular age group to see if the mean death rates overlap for each 
+age group. To do so, we must assume that our sample is representative 
+of the population. Additionally, in all age groups, there are more than 
+5 observations from our original sample, so, our original sample 
+for each confidence interval is greater than 5 for all cases, so it is not 
+too small. Since our original sample is not too small and is representative 
+of the population, we can create a bootstrap confidence interval.
+
+First, we will create a 95% confidence interval for population mean death rate 
+of individuals between 0 and 19 who are infected with COVID-19. As seen below, 
+we are 95% confident that the actual population mean death rate of infected 
+individuals between 0 and 19 is between 0.06 and 0.09.
+
+```{r ci-youngest}
+covid_youngst <- covid %>%
+  filter(age_group == "0-19") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_youngst <- covid_youngst %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+int_0 <- boot_dist_youngst %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+int_0
+```
+
+Now, we will create a 95% confidence interval for population mean death rate 
+of individuals between 20 and 39 who are infected with COVID-19. As seen below, 
+we are 95% confident that the actual population mean death rate of infected 
+individuals between 20 and 39 is between 0.04 and 0.07.
+
+```{r ci-young-age}
+covid_young_age <- covid %>%
+  filter(age_group == "20-39") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_young <- covid_young_age %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+int_20 <- boot_dist_young %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+int_20
+```
+
+Now, we will create a 95% confidence interval for population mean death rate 
+of individuals between 40 and 59 who are infected with COVID-19. As seen below, 
+we are 95% confident that the actual population mean death rate of infected 
+individuals between 40 and 59 is between 0.03 and 0.07.
+
+```{r ci-middle-1}
+covid_mid_1 <- covid %>%
+  filter(age_group == "40-59") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_mid1 <- covid_mid_1 %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+int_40 <- boot_dist_mid1 %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+int_40
+```
+
+Now, we will create a 95% confidence interval for population mean death rate 
+of individuals between 60 and 79 who are infected with COVID-19. As seen below, 
+we are 95% confident that the actual population mean death rate of infected 
+individuals between 60 and 79 is between 0.03 and 0.08.
+
+```{r ci-middle-2}
+covid_mid_2 <- covid %>%
+  filter(age_group == "60-79") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_mid2 <- covid_mid_2 %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+int_60 <- boot_dist_mid2 %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+int_60
+```
+
+Finally, we will create a 95% confidence interval for population mean death 
+rate of individuals between 80 and 99 who are infected with COVID-19. 
+As seen below, we are 95% confident that the actual population mean death 
+rate of infected individuals between 80 and 99 is between 0.05 and 0.16.
+
+```{r ci-old-age}
+covid_old_age <- covid %>%
+  filter(age_group == "80-99") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_old <- covid_old_age %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+int_old <- boot_dist_old %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+
+int_old
+```
+
+The confidence intervals all seem to overlap, so we cannot claim that there 
+is significant difference between the mean death rate of individuals in the 
+different age groups. However, the upper end of the confidence interval for 
+the oldest age group, 80 to 99 year old patients, is at least .07 higher 
+than the upper end of the confidence intervals for any other age group. 
 
 ## Section 5: Discussion
 
