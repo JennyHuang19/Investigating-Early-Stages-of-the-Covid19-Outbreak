@@ -1,8 +1,10 @@
 ---
 title: "Investigating the COVID-19 Outbreak"
-subtitle: ""
-author: "Team 2!: Delaney Demark, Jenny Huang, Abby Mapes, Harshavardhan Srijay"
-output: pdf_document
+author: 'Team 2!: Delaney Demark, Jenny Huang, Abby Mapes, Harshavardhan Srijay'
+subtitle: ''
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -258,7 +260,7 @@ If there are any confoundingvariables, we will estimate the mean age
 of affected individuals faceted by the confounding variables.
 
 
-```{r ci-young-age}
+```{r ci-young}
 covid_young_age <- covid %>%
   filter(age_group == "20-39") %>%
   count(age) %>% 
@@ -278,7 +280,7 @@ boot_dist_young %>%
 We are 95% confident that the true mean death rate of the population age 20-39 
 is between the range of (0.03668033 and 0.06598361).
 
-```{r ci-old-age}
+```{r ci-old}
 covid_old_age <- covid %>%
   filter(age_group == "80-99") %>%
   count(age) %>% 
