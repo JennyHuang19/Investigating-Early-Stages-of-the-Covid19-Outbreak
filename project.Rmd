@@ -568,8 +568,7 @@ ggplot(mapping = aes(x = age_group, fill = death)) +
 with Recorded Deaths")
 ```
 
-Ulitmately, a patient's gender, whether they visited Wuhan recently, whehter 
-they live in Wuhan, and what country they are from doesn't seem to affect the 
+Ulitmately, a patient's gender, whether they visited Wuhan recently, and what country they are from doesn't seem to affect the 
 association between a patient's age group and their survival status from 
 COVID-19.
 
