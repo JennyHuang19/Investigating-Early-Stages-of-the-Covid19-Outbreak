@@ -759,11 +759,11 @@ null_dist_prop %>%
   
 ```
 
-Here, our p-value was calculated as 0.06. This is higher than our 
-aforementioned $\alpha$ level of 0.05, meaning that we do not have enough
-evidence to suggest that the difference in proportion of deaths between
-men and women is significantly different. This confirms our findings using
-confidence intervals.
+Here, our p-value was calculated as 0.006. This is lower than our 
+aforementioned $\alpha$ level of 0.05, meaning that we can reject the null 
+hypothesis, and that we do have enough evidence to suggest that the difference 
+in proportion of deaths between men and women is significantly different. This 
+confirms our findings using confidence intervals.
 
 Similarly, we conducted simulation-based hypothesis tests for whether a person
 is from Wuhan, using the following hypotheses:
@@ -796,7 +796,7 @@ The covid_class dataset is created below, selecting for the variables of
 interest (death, age, gender, visiting_wuhan, from_wuhan) and removing all "NA"
 values.
 
-```{r covid_class}
+```{r covid-class}
 covid_class <- covid %>% 
   select(death, age, gender, visiting_wuhan, from_wuhan)
 
@@ -805,7 +805,7 @@ covid_class <- na.omit(covid_class, invert = FALSE)
 
 We picked random observations to set aside as our testing data. 
 
-```{r create-indices}
+```{r create_indices}
 set.seed(03052020)
 indices <- sample(nrow(covid_class), 100) # 100 observations to test on
 ```
@@ -816,7 +816,7 @@ Also, a vector of the class labels for the training dataset, train_type,
 and a vector of the true class labels for the test dataset, true_type, were 
 created.
 
-```{r train-and-test-data}
+```{r train-and-test-death-data}
 covid_test <- covid_class  %>% 
   slice(indices) 
 
@@ -834,14 +834,14 @@ The R function glm() requires for logistic regression that the response variable
 takes on values of 0 or 1. Create a new variable in the training dataset named 
 bin_type that is 0 if the patient did not die, and 1 if the patient died.
 
-```{r ex_7}
+```{r log-reg-data}
 covid_train_log <- covid_train %>% 
   mutate(bin_type = if_else(death == "Yes", 1, 0))
 ```
 
 Below is our logistic regression model to 
 
-```{r logit-mod}
+```{r logit-mod-death}
 logit_mod <- glm(bin_type ~ gender + age + visiting_wuhan + from_wuhan, 
                  data = covid_train_log, family = "binomial")
 
@@ -855,7 +855,7 @@ by approximately 0.07870473.
 
 Here we created a classifer with the cut-off value of 0.5.
 
-```{r classifier}
+```{r classifier-probabilities}
 pred_log_odds <- augment(logit_mod, newdata = covid_test) %>%
   pull(.fitted)
 
@@ -1036,6 +1036,21 @@ among patients living in Wuhan was higher than those not living in Wuhan for
 age groups above 40. Again, the limitations of the data set prevented us from 
 concluding any significant impact the country of the case could have on the 
 death rate. Therefore, we found that living in Wuhan had the greatest impact on 
+To help us further determine if there exists a relationship between age and 
+survival, we created 95% confidence intervals for the mean age of all patients, 
+the patients that survived, and the patients that died. The 95% confidence 
+interval for the surviving patients was slightly lower than the confidence 
+interval for all patients, whereas the confidence interval for the mean age of 
+patients who died was approximately 15 years higher than the others. 
+
+Through utilizing simulation-based two-sided hypothesis tests, we further 
+examined the impact of the patient’s gender and whether they lived in Wuhan on 
+the death rates. In both hypothesis tests, we rejected the null hypotheses that 
+there is not difference in death proportions between genders and those who did 
+and did not live in Wuhan. Therefore, there was a significant difference in the 
+proportion of deaths between females and males, as well as those who did and 
+those who did not live in Wuhan.
+
 the death rates within each age group. 
 
 - II: mean age CI
