@@ -422,6 +422,7 @@ covid_train_log <- covid_train %>%
   mutate(bin_type = if_else(death == "Yes", 1, 0))
 ```
 
+Below is a logistic regression model with relevant predictor variables. 
 
 ```{r logit-mod}
 logit_mod <- glm(bin_type ~ gender + age + visiting_wuhan + from_wuhan, 
@@ -435,31 +436,9 @@ Holding all other variables constant, for each unit increase in age,
 we would expect the log-odds of a covid-19 case resulting in deaths to increase 
 by approximately 0.07870473.
 
-As we can see below, the prediction accuracy is 90% for our logistic 
-regression model.
-
-```{r classifier}
-pred_log_odds <- augment(logit_mod, newdata = covid_test) %>%
-  pull(.fitted)
-
-pred_probs <- exp(pred_log_odds) / (1 + exp(pred_log_odds))
-pred_probs <- round(pred_probs,3)
-
-for (i in 1:100){
-  pred_probs[i]
-}
-
-classified_types <- character(75)
-
-for (i in 1:100){
-  classified_types[i] <- if_else(pred_probs[i] > .5, "Yes", "No")
-}
-
-pred_probs
-classified_types
-mean(classified_types == true_type)
-```
-
+We plan to create a classifier to classify survival status based on the above
+variables. Then, we will determine how well these variables predict death by
+looking at the accuracy of the logistic model.
 
 ## Section 3: Data
 The dimensions of our dataset are 1,085 rows by 16 columns.
@@ -789,10 +768,13 @@ of deaths between people from Wuhan and people not from Wuhan. This confirms
 our findings using confidence intervals.
 
 ## IV. Logistic Modeling to Classify Death
-Next, we used a logistic regression model to obtain predicted probabilities
-of an outcome of "death" given the explanatory variables in our model. 
 
-The covid_class dataset is created below, selecting for the variables of 
+Next, we used a logistic regression model to obtain predicted probabilities
+for an outcome of "death" given the explanatory variables in our model. We will
+determine whether these variables are good predicters of "death" through looking 
+at the accuracy of our logistic regression model.
+
+A new dataset called covid_class is created, selecting for our variables of 
 interest (death, age, gender, visiting_wuhan, from_wuhan) and removing all "NA"
 values.
 
@@ -803,14 +785,14 @@ covid_class <- covid %>%
 covid_class <- na.omit(covid_class, invert = FALSE)
 ```
 
-We picked random observations to set aside as our testing data. 
+We picked 100 random observations to set aside as our testing data. 
 
 ```{r create-indices}
 set.seed(03052020)
 indices <- sample(nrow(covid_class), 100) # 100 observations to test on
 ```
 
-We created training and testing datasets covid_train and covid_test. 
+We then created training and testing datasets covid_train and covid_test. 
 
 Also, a vector of the class labels for the training dataset, train_type, 
 and a vector of the true class labels for the test dataset, true_type, were 
@@ -834,12 +816,12 @@ The R function glm() requires for logistic regression that the response variable
 takes on values of 0 or 1. Create a new variable in the training dataset named 
 bin_type that is 0 if the patient did not die, and 1 if the patient died.
 
-```{r ex_7}
+```{r create-logit-data}
 covid_train_log <- covid_train %>% 
   mutate(bin_type = if_else(death == "Yes", 1, 0))
 ```
 
-Below is our logistic regression model to 
+Below is our logistic regression model.
 
 ```{r logit-mod}
 logit_mod <- glm(bin_type ~ gender + age + visiting_wuhan + from_wuhan, 
@@ -849,9 +831,27 @@ tidy(logit_mod) %>%
   select(term,estimate)
 ```
 
+A patient that is female, age 0, and has neither visited or is from Wuhan is
+predicted, on average, to have the log-odds of the death status being "Yes"
+(dead) to be -9.04349028; in this case, the y-intercept is simply a placeholder
+without practical meaning, as it is impractical for the age of patient to be 0.
+
 Holding all other variables constant, for each unit increase in age, 
-we would expect the log-odds of a covid-19 case resulting in deaths to increase 
-by approximately 0.07870473.
+we would expect the log-odds of a covid case resulting in death to increase 
+by approximately 0.07870473, which is consistent with the trend of older 
+individuals having higher death rates.
+
+Holding all other variables constant, if a patient is male, 
+we would expect the log-odds of a covid case resulting in death to increase 
+by approximately 1.40861782, which is consistent with the trend of males
+having higher death rates.
+
+Holding all other variables constant, if a patient has visited Wuhan, 
+we would expect the log-odds of a covid case resulting in death to decrease 
+by approximately 0.82439051.
+
+Holding all other variables constant, if a patient is from Wuhan, 
+we would expect the log-odds of a covid case resulting in death to increase by approximately 2.37039736.
 
 Here we created a classifer with the cut-off value of 0.5.
 
@@ -872,17 +872,17 @@ for (i in 1:100){
   classified_types[i] <- if_else(pred_probs[i] > .5, "Yes", "No")
 }
 
-pred_probs
-classified_types
-
 tibble(pred_probs, classified_types)
 mean(classified_types == true_type)
 ```
 
 As we can see above, the prediction accuracy is 90% for our logistic 
-regression model.
+regression model. Given this fairly high prediction accuracy, we find
+the predictor variables age, gender, visiting_wuhan, and from_wuhan to be
+good predictors of death.
 
 ## V. Confidence Intervals for Each Age Group
+
 Now, for each age group, we will take bootstrap samples, calculate the mean 
 death rate, and obtain a 95% confidence interval for the true mean death rate 
 of that particular age group to see if the mean death rates overlap for each 
@@ -1017,9 +1017,41 @@ than the upper end of the confidence intervals for any other age group.
 
 ## Section 5: Discussion
 
+This section is a one to two page conclusion and discussion. This will require a summary of what you have learned about your research question along with statistical arguments supporting your conclusions. Also, critique your own methods and provide suggestions for improving your analysis. Issues pertaining to the reliability and validity of your data and appropriateness of the statistical analysis should also be discussed here. A paragraph on what you would do differently if you were able to start over with the project or what you would do next if you were going to continue work on the project should also be included.
 
-- II: mean age CI
-    interval for those infected is closer to interval to those that survive
-    isn't the case that just older people are infected, those that are infected 
-    usually survive but of those infected the ones who are older are the ones 
-    that die (?)
+## I. Conditional Probabilities
+
+## II. Mean Age of Affected Individuals
+- II: 
+mean age CI interval for those infected is closer to interval to those that 
+survive isn't the case that just older people are infected, those that are 
+infected usually survive but of those infected the ones who are older are the 
+ones that die (?)
+## III. Association between Age Group and Death Rate
+
+## IV. Logistic Modeling to Classify Death
+Through performing a logistic regression, we were able to create a classifier
+for survival status (death = yes or no). Through our logistic regression model,
+we saw that holding all other variables constant, for each unit increase in age, 
+we would expect the log-odds of a covid case resulting in death to increase 
+by approximately 0.07870473. This pattern consistent with our hypothesis that
+cases where the patient is older have higher likelihoods of resulting in death.
+We also saw that, if a patient is male, we would expect the log-odds of a covid 
+case resulting in death to increase by approximately 1.40861782, which is 
+consistent with the trend of males having higher death rates. From the accuracy 
+of the classifier (90%) we created from our model, we determined that the 
+variables of interest are good predictors of death.
+
+There were several missing values present among each of the variables of 
+interest. Given that we filtered out these "NA" values before creating the 
+logistic model, we have to consider that the incompleteness of the data we 
+are working with makes our model is less valid and representative of the true 
+scenario.
+
+
+## V. Confidence Intervals for Each Age Group
+
+
+
+
+
