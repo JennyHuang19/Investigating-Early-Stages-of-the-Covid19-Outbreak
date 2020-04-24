@@ -372,26 +372,34 @@ Thus, with an alpha level of 0.05, we have sufficient evidence to reject
 the null hypothesis that the mean death rate for the age group "80-99" is equal
 to the mean death rate of age group "20-39." 
 
-d) A final way we will measure whether the explanatory variables are significant 
-determiners of death is by creating logistic regression models for 
-classification for death. 
+d) Next, we used a logistic regression model to obtain predicted probabilities
+of an outcome of "death" given the explanatory variables in our model. 
 
-Pick 100 random observations to set aside as our testing data. 
+The covid_class dataset is created below, selecting for the variables of 
+interest (death, age, gender, visiting_wuhan, from_wuhan) and removing all "NA"
+values.
 
-```{r create-indices}
-set.seed(03052020)
-indices <- sample(nrow(covid), 50) # 100 observations to test on
-```
-
-Create training and testing datasets as well as vectors containing the status
-of death for training and testing datasets.
-
-```{r train-and-test-data}
+```{r covid_class}
 covid_class <- covid %>% 
   select(death, age, gender, visiting_wuhan, from_wuhan)
 
 covid_class <- na.omit(covid_class, invert = FALSE)
+```
 
+We picked random observations to set aside as our testing data. 
+
+```{r create-indices}
+set.seed(03052020)
+indices <- sample(nrow(covid_class), 100) # 100 observations to test on
+```
+
+We created training and testing datasets covid_train and covid_test. 
+
+Also, a vector of the class labels for the training dataset, train_type, 
+and a vector of the true class labels for the test dataset, true_type, were 
+created.
+
+```{r train-and-test-data}
 covid_test <- covid_class  %>% 
   slice(indices) 
 
@@ -405,14 +413,15 @@ true_type <- covid_test %>%
   pull(death)
 ```
 
+The R function glm() requires for logistic regression that the response variable 
+takes on values of 0 or 1. Create a new variable in the training dataset named 
+bin_type that is 0 if the patient did not die, and 1 if the patient died.
+
 ```{r ex_7}
 covid_train_log <- covid_train %>% 
   mutate(bin_type = if_else(death == "Yes", 1, 0))
 ```
 
-Note: There is missing data for the variables: age-group, gender, and visiting
-Wuhan; these missing data points may affect the accuracy of our logistic 
-regression model.
 
 ```{r logit-mod}
 logit_mod <- glm(bin_type ~ gender + age + visiting_wuhan + from_wuhan, 
@@ -422,6 +431,13 @@ tidy(logit_mod) %>%
   select(term,estimate)
 ```
 
+Holding all other variables constant, for each unit increase in age, 
+we would expect the log-odds of a covid-19 case resulting in deaths to increase 
+by approximately 0.07870473.
+
+As we can see below, the prediction accuracy is 90% for our logistic 
+regression model.
+
 ```{r classifier}
 pred_log_odds <- augment(logit_mod, newdata = covid_test) %>%
   pull(.fitted)
@@ -429,13 +445,13 @@ pred_log_odds <- augment(logit_mod, newdata = covid_test) %>%
 pred_probs <- exp(pred_log_odds) / (1 + exp(pred_log_odds))
 pred_probs <- round(pred_probs,3)
 
-for (i in 1:50){
+for (i in 1:100){
   pred_probs[i]
 }
 
-classified_types <- character(50)
+classified_types <- character(75)
 
-for (i in 1:50){
+for (i in 1:100){
   classified_types[i] <- if_else(pred_probs[i] > .5, "Yes", "No")
 }
 
@@ -443,13 +459,6 @@ pred_probs
 classified_types
 mean(classified_types == true_type)
 ```
-
-
-Notes in regards to failing linearity assumption:
--fit logistic regression model on the original variable. 
-(response = health outcome)
--or transform the age.
--knn classification on death (quantitative predictors)
 
 
 ## Section 3: Data
@@ -779,7 +788,99 @@ null hypothesis. This means that there is a significant difference in proportion
 of deaths between people from Wuhan and people not from Wuhan. This confirms
 our findings using confidence intervals.
 
-## IV. Logistic Modeling
+## IV. Logistic Modeling to Classify Death
+Next, we used a logistic regression model to obtain predicted probabilities
+of an outcome of "death" given the explanatory variables in our model. 
+
+The covid_class dataset is created below, selecting for the variables of 
+interest (death, age, gender, visiting_wuhan, from_wuhan) and removing all "NA"
+values.
+
+```{r covid_class}
+covid_class <- covid %>% 
+  select(death, age, gender, visiting_wuhan, from_wuhan)
+
+covid_class <- na.omit(covid_class, invert = FALSE)
+```
+
+We picked random observations to set aside as our testing data. 
+
+```{r create-indices}
+set.seed(03052020)
+indices <- sample(nrow(covid_class), 100) # 100 observations to test on
+```
+
+We created training and testing datasets covid_train and covid_test. 
+
+Also, a vector of the class labels for the training dataset, train_type, 
+and a vector of the true class labels for the test dataset, true_type, were 
+created.
+
+```{r train-and-test-data}
+covid_test <- covid_class  %>% 
+  slice(indices) 
+
+covid_train <- covid_class %>% 
+  slice(-indices)
+
+train_type <- covid_train %>% 
+  pull(death)
+
+true_type <- covid_test %>% 
+  pull(death)
+```
+
+The R function glm() requires for logistic regression that the response variable 
+takes on values of 0 or 1. Create a new variable in the training dataset named 
+bin_type that is 0 if the patient did not die, and 1 if the patient died.
+
+```{r ex_7}
+covid_train_log <- covid_train %>% 
+  mutate(bin_type = if_else(death == "Yes", 1, 0))
+```
+
+Below is our logistic regression model to 
+
+```{r logit-mod}
+logit_mod <- glm(bin_type ~ gender + age + visiting_wuhan + from_wuhan, 
+                 data = covid_train_log, family = "binomial")
+
+tidy(logit_mod) %>%
+  select(term,estimate)
+```
+
+Holding all other variables constant, for each unit increase in age, 
+we would expect the log-odds of a covid-19 case resulting in deaths to increase 
+by approximately 0.07870473.
+
+Here we created a classifer with the cut-off value of 0.5.
+
+```{r classifier}
+pred_log_odds <- augment(logit_mod, newdata = covid_test) %>%
+  pull(.fitted)
+
+pred_probs <- exp(pred_log_odds) / (1 + exp(pred_log_odds))
+pred_probs <- round(pred_probs,3)
+
+for (i in 1:100){
+  pred_probs[i]
+}
+
+classified_types <- character(75)
+
+for (i in 1:100){
+  classified_types[i] <- if_else(pred_probs[i] > .5, "Yes", "No")
+}
+
+pred_probs
+classified_types
+
+tibble(pred_probs, classified_types)
+mean(classified_types == true_type)
+```
+
+As we can see above, the prediction accuracy is 90% for our logistic 
+regression model.
 
 ## V. Confidence Intervals for Each Age Group
 Now, for each age group, we will take bootstrap samples, calculate the mean 
