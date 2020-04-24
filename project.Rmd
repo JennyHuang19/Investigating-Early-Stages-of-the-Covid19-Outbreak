@@ -710,13 +710,59 @@ the true mean age of infected individuals who die is about 15 years higher than
 the other two intervals. 
 
 ## III. Association between Age Group and Death Rate
-
-To further our study of whether death rate can be attributed to variables such
-as the person's gender and whether the person is from Wuhan, beyond that of 
-confidence intervals, we will conduct simulation-based two-sided hypothesis 
+To further our understanding of whether death rate can be attributed to
+our variables of interest, such as age, we will now employ a more
+rigorous method of testing for the effect of these variables on death rate,
+beyond that of confidence intervals, using simulation-based hypothesis 
 tests, under the $\alpha = 0.05$ level. 
 
-When testing the effect of gender, we will calculate the difference in the
+First, we conduct a one-sided hypothesis test for the age variable. We chose
+to delineate "old" observations from "young" observations through the 60 years
+of age mark, as the mean age of deaths due to COVID-19 in our sample was
+approximately 68, and the mean age of survival was approximately 48. Ideally,
+we would have chosen 58 then, to be our cut-off age, but as our age group
+was defined to be 40-59, we chose 60 to be our cut-off age. In this 
+hypothesis test, our null hypothesis was that the proportion of deaths in
+both the younger and older groups would be equal.
+$$H_0: p_{old} = p_{young}$$
+Our alternative hypothesis was that the true proportion of deaths ($p$), in
+the older population is greater than that of the younger age group.
+$$H_A: p_{old} > p_{young}$$
+```{r age hypothesis test}
+set.seed(123)
+covid_age <- covid %>%
+  mutate(young_old = ifelse(age < 60, "young", "old"))
+diff_props <- covid_age %>%
+  specify(death ~ young_old, success = "Yes") %>%
+  calculate(stat = "diff in props", order = c("old", "young"))
+diff_props
+null_dist_prop <- covid_age %>% 
+   specify(death ~ young_old, success = "Yes") %>%
+   hypothesize(null = "independence") %>% 
+   generate(reps = 2000, type = "permute") %>% 
+   calculate(stat = "diff in props", order = c("old", "young"))
+null_dist_prop %>% 
+   get_p_value(obs_stat = diff_props, direction = "greater")
+ggplot(data = null_dist, mapping = aes(x = stat)) +
+  geom_histogram(bins = 20) +
+  labs(title = "Null distribution",
+       x = "Sample proportion",
+       y = "Count") +
+  theme_bw(base_size = 16)
+           
+```
+
+From this simulation-based hypothesis test, we obtained a p-value of 0, 
+meaning we can reject our null hypothesis, as this is less than our $\alpha$
+level of 0.05. This p-value means that assuming there is no difference in the
+death rates of these two groups, the probability that the difference in death
+rate between older and younger people is 0.147 or more, which is what we
+observed in our sample data, is essentially 0. So, we can say that there the
+death rate due to COVID-19 of people aged 60 or older is significantly higher
+than that of people younger than the age of 60.
+
+
+To test the effect of gender, we will calculate the difference in the
 proportion of deaths between men and women in our sample. Our null hypothesis
 is that there is no difference in the proportions of deaths between genders:
 $$H_0: p_{male} = p_{female}$$
