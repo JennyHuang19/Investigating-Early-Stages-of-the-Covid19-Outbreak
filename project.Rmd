@@ -568,7 +568,7 @@ consider country of origin as a possible explanation of our data. We will only
 consider countries with recorded deaths in our data set. Note: we filtered 
 any patients with unrecorded ages, these deaths are not included. As seen in 
 the calculation and visualization of P(Dead|Age Group) for each country below, 
-P(Dead|Age) for each country group never decreases as age increeases. However, 
+P(Dead|Age) for each country group never decreases as age increases. However, 
 we do not have enough data for each country to properly visualze P(Dead|Age) 
 for each country and consider country of origin as a possible explanation of 
 our data. 
@@ -598,7 +598,8 @@ ggplot(mapping = aes(x = age_group, fill = death)) +
 with Recorded Deaths")
 ```
 
-Ulitmately, a patient's gender, whether they visited Wuhan recently, and what country they are from doesn't seem to affect the 
+Ulitmately, a patient's gender, whether they visited Wuhan recently, and what 
+country they are from doesn't seem to affect the 
 association between a patient's age group and their survival status from 
 COVID-19.
 
@@ -816,13 +817,12 @@ our findings using confidence intervals.
 ## IV. Logistic Modeling to Classify Death
 
 Next, we used a logistic regression model to obtain predicted probabilities
-for an outcome of "death" given the explanatory variables in our model. We will
-determine whether these variables are good predicters of "death" through looking 
-at the accuracy of our logistic regression model.
+for an outcome "death == yes" given the explanatory variables in our model. 
+We will determine whether the variables of interest are good predicters of 
+"death" through looking at the accuracy of our logistic regression model.
 
-A new dataset called covid_class is created, selecting for our variables of 
-interest (death, age, gender, visiting_wuhan, from_wuhan) and removing all "NA"
-values.
+A new dataset called covid_class is created, selecting the variables (death, 
+age, gender, visiting_wuhan, from_wuhan) and removing all "NA" values.
 
 ```{r covid_class}
 covid_class <- covid %>% 
@@ -877,7 +877,7 @@ tidy(logit_mod) %>%
   select(term,estimate)
 ```
 
-A patient that is female, age 0, and has neither visited or is from Wuhan is
+A patient that is female, age 0, and has neither visited nor is from Wuhan is
 predicted, on average, to have the log-odds of the death status being "Yes"
 (dead) to be -9.04349028; in this case, the y-intercept is simply a placeholder
 without practical meaning, as it is impractical for the age of patient to be 0.
@@ -897,9 +897,12 @@ we would expect the log-odds of a covid case resulting in death to decrease
 by approximately 0.82439051.
 
 Holding all other variables constant, if a patient is from Wuhan, 
-we would expect the log-odds of a covid case resulting in death to increase by approximately 2.37039736.
+we would expect the log-odds of a covid case resulting in death to increase by 
+approximately 2.37039736. This is consistent with the finding in our hypothesis
+test, that there is a significant difference in proportion of deaths between 
+people from Wuhan and people not from Wuhan.
 
-Here we created a classifer with the cut-off value of 0.5.
+Here, we created a classifer with the cut-off value of 0.5.
 
 ```{r classifier}
 pred_log_odds <- augment(logit_mod, newdata = covid_test) %>%
@@ -912,7 +915,7 @@ for (i in 1:100){
   pred_probs[i]
 }
 
-classified_types <- character(75)
+classified_types <- character(100)
 
 for (i in 1:100){
   classified_types[i] <- if_else(pred_probs[i] > .5, "Yes", "No")
@@ -1078,32 +1081,32 @@ ones that die (?)
 ## IV. Logistic Modeling to Classify Death
 Through performing a logistic regression, we were able to create a classifier
 for survival status (death = yes or no). Through our logistic regression model,
-we saw that holding all other variables constant, for each unit increase in age, 
-we would expect the log-odds of a covid case resulting in death to increase 
+we saw that, holding all other variables constant, for each unit increase in 
+age, we would expect the log-odds of a covid case resulting in death to increase 
 by approximately 0.07870473. This pattern consistent with our hypothesis that
 cases where the patient is older have higher likelihoods of resulting in death.
 We also saw that, if a patient is male, we would expect the log-odds of a covid 
 case resulting in death to increase by approximately 1.40861782, which is 
 consistent with the trend of males having higher death rates. From the accuracy 
-of the classifier (90%) we created from our model, we determined that the 
+of the classifier (90%) we created from our model, we determined that our 
 variables of interest are good predictors of death.
 
-Classification using logistic regression is appropriate here, as our response
-variable (death) is categorical and our predictors include both categorical
-and continuous variables. The conditions to perform logistic regression are
-that the observations are independent of one another and that the predictors 
-are not highly correlated. Given the nature of disease spread, we cannot be 
-certain that our observations are independent from one another, because one case 
-could have caused another. Furthermore, there may be some correlation between 
-the predictors "from_wuhan" and "visited_wuhan", because people who visit wuhan 
-are likely to be from regions near Wuhan. These above-mentioned factors may 
-lower the reliability of our coefficient estimates.
+To answer our research questions, implementing a logistic regression was
+appropriate, since our response variable (death) is categorical and our 
+predictor variables include both categorical and continuous variables. The 
+conditions to perform logistic regression are: 1. the observations are 
+independent of one another and 2. the predictors are not highly correlated. 
+Given the nature of disease spread, we cannot becertain that our observations 
+are independent from one another -- one case could have been linked to another. 
+Furthermore, there may be some correlation between predictor variables
+"from_wuhan" and "visited_wuhan," as people who visit wuhan are likely to be 
+from regions around Wuhan. These above-mentioned factors may act to lower the 
+reliability of our logistic model.
 
-Finally, there were several missing values present among each of the 
-variables of interest. Given that we filtered out these "NA" values before 
-creating the logistic model, we have to consider that the incompleteness of the 
-data we are working with makes our model is less valid and representative of the 
-true situation.
+Finally, there were several missing values present among each of the variables 
+of interest. Given that we filtered out these "NA" values before creating the
+model, we have to consider that the incompleteness of the data, which makes our 
+model our less accurate and representative of the true situation.
 
 
 ## V. Confidence Intervals for Each Age Group
