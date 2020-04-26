@@ -259,7 +259,7 @@ particular age group. If the confidence intervals for the mean death rates do
 not overlap, we can conclude that the mean death rate for the older age group 
 is significantly different from the mean death rate of the younger age group. 
 
-If there are any confoundingvariables, we will estimate the mean age 
+If there are any confounding variables, we will estimate the mean age 
 of affected individuals faceted by the confounding variables.
 
 
@@ -382,7 +382,7 @@ The covid_class dataset is created below, selecting for the variables of
 interest (death, age, gender, visiting_wuhan, from_wuhan) and removing all "NA"
 values.
 
-```{r covid_class}
+```{r covid-class-3}
 covid_class <- covid %>% 
   select(death, age, gender, visiting_wuhan, from_wuhan)
 
@@ -391,18 +391,18 @@ covid_class <- na.omit(covid_class, invert = FALSE)
 
 We picked random observations to set aside as our testing data. 
 
-```{r create-indices}
+```{r create-indices-4}
 set.seed(03052020)
 indices <- sample(nrow(covid_class), 100) # 100 observations to test on
 ```
 
-We created training and testing datasets covid_train and covid_test. 
+We created training and testing data sets covid_train and covid_test. 
 
 Also, a vector of the class labels for the training dataset, train_type, 
 and a vector of the true class labels for the test dataset, true_type, were 
 created.
 
-```{r train-and-test-data}
+```{r train-and-test-data-3}
 covid_test <- covid_class  %>% 
   slice(indices) 
 
@@ -427,7 +427,7 @@ covid_train_log <- covid_train %>%
 
 Below is a logistic regression model with relevant predictor variables. 
 
-```{r logit-mod}
+```{r logit-mod-2}
 logit_mod <- glm(bin_type ~ gender + age + visiting_wuhan + from_wuhan, 
                  data = covid_train_log, family = "binomial")
 
@@ -572,7 +572,7 @@ consider countries with recorded deaths in our data set. Note: we filtered
 any patients with unrecorded ages, these deaths are not included. As seen in 
 the calculation and visualization of P(Dead|Age Group) for each country below, 
 P(Dead|Age) for each country group never decreases as age increases. However, 
-we do not have enough data for each country to properly visualze P(Dead|Age) 
+we do not have enough data for each country to properly visualize P(Dead|Age) 
 for each country and consider country of origin as a possible explanation of 
 our data. 
 
@@ -601,7 +601,7 @@ ggplot(mapping = aes(x = age_group, fill = death)) +
 with Recorded Deaths")
 ```
 
-Ulitmately, a patient's gender, whether they visited Wuhan recently, and what 
+Ultimately, a patient's gender, whether they visited Wuhan recently, and what 
 country they are from doesn't seem to affect the 
 association between a patient's age group and their survival status from 
 COVID-19.
@@ -821,13 +821,13 @@ our findings using confidence intervals.
 
 Next, we used a logistic regression model to obtain predicted probabilities
 for an outcome "death == yes" given the explanatory variables in our model. 
-We will determine whether the variables of interest are good predicters of 
+We will determine whether the variables of interest are good predictors of 
 "death" through looking at the accuracy of our logistic regression model.
 
 A new dataset called covid_class is created, selecting the variables (death, 
 age, gender, visiting_wuhan, from_wuhan) and removing all "NA" values.
 
-```{r covid_class}
+```{r covid_class_2}
 covid_class <- covid %>% 
   select(death, age, gender, visiting_wuhan, from_wuhan)
 
@@ -836,18 +836,18 @@ covid_class <- na.omit(covid_class, invert = FALSE)
 
 We picked 100 random observations to set aside as our testing data. 
 
-```{r create-indices}
+```{r create-indices-2}
 set.seed(03052020)
 indices <- sample(nrow(covid_class), 100) # 100 observations to test on
 ```
 
-We then created training and testing datasets covid_train and covid_test. 
+We then created training and testing data sets covid_train and covid_test. 
 
 Also, a vector of the class labels for the training dataset, train_type, 
 and a vector of the true class labels for the test dataset, true_type, were 
 created.
 
-```{r train-and-test-data}
+```{r train-and-test-data-2}
 covid_test <- covid_class  %>% 
   slice(indices) 
 
@@ -872,7 +872,7 @@ covid_train_log <- covid_train %>%
 
 Below is our logistic regression model.
 
-```{r logit-mod}
+```{r logit-mod-3}
 logit_mod <- glm(bin_type ~ gender + age + visiting_wuhan + from_wuhan, 
                  data = covid_train_log, family = "binomial")
 
@@ -905,7 +905,7 @@ approximately 2.37039736. This is consistent with the finding in our hypothesis
 test, that there is a significant difference in proportion of deaths between 
 people from Wuhan and people not from Wuhan.
 
-Here, we created a classifer with the cut-off value of 0.5.
+Here, we created a classifier with the cut-off value of 0.5.
 
 ```{r classifier}
 pred_log_odds <- augment(logit_mod, newdata = covid_test) %>%
@@ -1100,7 +1100,8 @@ To help us further determine if there exists a relationship between age and
 survival, we created 95% confidence intervals for the mean age of all patients, 
 the patients that survived, and the patients that died. The 95% confidence 
 interval for the surviving patients was slightly lower than the confidence 
-interval for all patients, whereas the confidence interval for the mean age of patients who died was approximately 15 years higher than the others. 
+interval for all patients, whereas the confidence interval for the mean age of 
+patients who died was approximately 15 years higher than the others. 
 
 ## III. Association between Age Group and Death Rate
 
@@ -1130,7 +1131,7 @@ appropriate, since our response variable (death) is categorical and our
 predictor variables include both categorical and continuous variables. The 
 conditions to perform logistic regression are: 1. the observations are 
 independent of one another and 2. the predictors are not highly correlated. 
-Given the nature of disease spread, we cannot becertain that our observations 
+Given the nature of disease spread, we cannot be certain that our observations 
 are independent from one another -- one case could have been linked to another. 
 Furthermore, there may be some correlation between predictor variables
 "from_wuhan" and "visited_wuhan," as people who visit wuhan are likely to be 
@@ -1144,28 +1145,81 @@ model our less accurate and representative of the true situation.
 
 
 ## V. Confidence Intervals for Each Age Group
+Using bootstrapping, we were able to calculate 95% confidence intervals for the 
+mean death rate of each age group in our dataset. For the 0-19 age group, our 
+95% confidence interval was (.06, .09). For the 20-39 age group, our 95% 
+confidence interval was (.04, .07). For the 40-59 age group, our 95% confidence 
+interval was (.03, .07). For the 60-79 age group, our 95% confidence interval 
+was (.03, .08).  Finally, for the 80-99 age group, our 95% confidence interval 
+was (.05, .16).  These intervals all overlap, so we cannot claim that there is 
+a significant difference in mean death rate between patients in different age 
+groups. 
 
-## VI. Next Steps
+We do note that the confidence interval for 80-99 year old patients 
+includes higher death rates than the intervals for younger age groups. This 
+does not mean that the true mean death rate for 80-99 year olds is higher than 
+other age groups. However, we are 95% confident that the true mean death rate 
+for 80-99 year olds is contained in an interval that includes higher death 
+rates than the 95% confidence intervals for other age groups. 
 
-If we were to start over on this project, we would pick a data frame with more observations outside of China. For example, when considering country of origin 
+Additionally, we see that the width of the 95% confidence intervals for the 
+0-19, 20-39, 40-59, and 60-79 age groups range from around .03 to .05, 
+while the width of the 95% confidence interval for the 80-99 age group is 
+around .11. So, our 95% confidence interval for the oldest age group is wider 
+than the confidence interval for all other age groups. Since the confidence 
+level is fixed for each age group, this indicates that the standard error is 
+higher for the 80-99 year old age group. The standard error depends on the 
+sample size and variation. In our dataset, there are 40 patients that are 
+80-99 years old. This sample size is smaller than some of the other age groups 
+in our dataset; however it is larger than the 0-19 year old age group that 
+includes 32 patients. The width of the 95% confidence interval for the 0-19 
+age group was around .03, which is much smaller than .11, indicating that 
+there is more variation in death rate within the 80-99 year old age group than 
+variation in death rate within the 0-19 year old age group. 
+
+## VI. Reliability and Validity of Data
+Throughout our data exploration, we were unable to conclude whether or not 
+there were correlations among different variables and the death rates because 
+often there was insufficient data to do so. Even though our dataset included 
+over 1,000 observations, many of these observations did not include values 
+for all 17 variables. Many patients in our dataset had unidentified gender and 
+age which made it hard to determine whether these variables impacted patient 
+survival status, since we couldn’t consider these observations. Additionally, 
+in creating confidence intervals and performing hypothesis tests, we had to 
+assume that our dataset was  representative of the population. However, 
+COVID-19 is a pandemic that infects hundreds of people every day. Thus, any 
+dataset including COVID-19 patients becomes quickly outdated as the virus 
+spreads and infects more individuals. Additionally, the impacts of a virus 
+varies based on individuals' situations. Countries have different medical 
+resources, climates, and populations. So, it is hard to determine if our 
+dataset is representative of an overall population that varies itself. 
+Ultimately, due to the difficulties in obtaining reliable, complete and valid 
+data about a global pandemic, we proceeded with caution when performing our 
+statistical analysis, keeping these limitations in mind. 
+
+## VII. Next Steps
+
+If we were to start over on this project, we would pick a data frame with more 
+observations outside of China. For example, when considering country of origin 
 as a possible determiner of death rate, we did not have enough data for each 
 country to properly visualize P(Dead|Age) for each country. Furthermore, since 
 our research question focused on whether age was a determiner of death rate, 
-age could easily have been confounded with other variables such as heart disease 
-or diabetes status. Next time, we would find a dataset containing this 
+age could easily have been confounded with other variables such as heart 
+disease or diabetes status. Next time, we would find a data set containing this 
 information. Finally, another method we could have used to determine the 
-significance of each explanatory variable on death rate would be inference for regression. The next steps we would do to continue this project would be to 
+significance of each explanatory variable on death rate would be inference for 
+regression. The next steps we would do to continue this project would be to 
 update the data frame with current COVID-19 data. Our data frame is small, 
 contains very few data points outside of China, and only focuses on the early 
 days of the pandemic (from Jan. - Feb.) The vast amount of data that has since 
 been added about the pandemic would provide more reliable conclusions to our 
-research questions, surrounding whether death outcome is correlated with factors 
-like age and gender. Moreover, given that there are very few data points outside
-of Asian countries, we were unable to draw meaningful conclusions to our 
-research questions outside of these countries; it would be interesting to find 
-whether our conclusions would hold in the U.S. and Europe. Ideally, we would 
-want to create a way to update our data so that our analyses are done on real 
-time data.
+research questions, surrounding whether death outcome is correlated with 
+factors like age and gender. Moreover, given that there are very few data 
+points outside of Asian countries, we were unable to draw meaningful 
+conclusions to our research questions outside of these countries; it would be 
+interesting to find whether our conclusions would hold in the U.S. and Europe. 
+Ideally, we would want to create a way to update our data so that our analyses 
+are done on real time data.
 
 
 
