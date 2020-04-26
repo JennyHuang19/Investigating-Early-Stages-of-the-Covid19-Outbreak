@@ -744,7 +744,7 @@ null_dist_prop <- covid_age %>%
    calculate(stat = "diff in props", order = c("old", "young"))
 null_dist_prop %>% 
    get_p_value(obs_stat = diff_props, direction = "greater")
-ggplot(data = null_dist, mapping = aes(x = stat)) +
+ggplot(data = null_dist_prop, mapping = aes(x = stat)) +
   geom_histogram(bins = 20) +
   labs(title = "Null distribution",
        x = "Sample proportion",
@@ -1070,13 +1070,43 @@ This section is a one to two page conclusion and discussion. This will require a
 
 ## I. Conditional Probabilities
 
+In the early stages of our data analysis, we found that the death rates for 
+each age group increased as the ages increased, so we explored the impact of a 
+variety of variables on the death rate per age group. For each of the potential 
+explanatory variables, we analyzed the proportion of patients that died, 
+grouping them by the categories of the variable. First, we investigated whether 
+gender was a possible confounding variable to explain the increase in death 
+rates among the age groups. Upon examining the proportions of dead patients per 
+age group faceted by gender,  it became clear that the gender was not a 
+confounding variable. Although we wanted to determine if patients visiting
+Wuhan had an impact on the death rate, only 18% of patients indicated that they 
+had visited Wuhan, so the data for this relationship was insufficient to reach 
+any conclusions. Next, we looked into the impact of the patients living in
+Wuhan on the survival rate within each age group; we found that the death
+rate among patients living in Wuhan was higher than those not living in Wuhan 
+for age groups above 40. Again, the limitations of the data set prevented us 
+from concluding any significant impact the country of the case could have on 
+the death rate. Therefore, we found that living in Wuhan had the greatest 
+impact on the death rates within each age group. 
+
 ## II. Mean Age of Affected Individuals
 - II: 
 mean age CI interval for those infected is closer to interval to those that 
 survive isn't the case that just older people are infected, those that are 
 infected usually survive but of those infected the ones who are older are the 
 ones that die (?)
+
+To help us further determine if there exists a relationship between age and survival, we created 95% confidence intervals for the mean age of all patients, the patients that survived, and the patients that died. The 95% confidence interval for the surviving patients was slightly lower than the confidence interval for all patients, whereas the confidence interval for the mean age of patients who died was approximately 15 years higher than the others. 
+
 ## III. Association between Age Group and Death Rate
+
+Through utilizing simulation-based two-sided hypothesis tests, we further 
+examined the impact of the patient’s gender and whether they lived in Wuhan on 
+the death rates. In both hypothesis tests, we rejected the null hypotheses that 
+there is not difference in death proportions between genders and those who did 
+and did not live in Wuhan. Therefore, there was a significant difference in the 
+proportion of deaths between females and males, as well as those who did and 
+those who did not live in Wuhan.
 
 ## IV. Logistic Modeling to Classify Death
 Through performing a logistic regression, we were able to create a classifier
