@@ -50,6 +50,9 @@ covid <- covid %>%
   mutate(age_group = ifelse(age < 20, "0-19", (ifelse(age <40, "20-39",
   ifelse(age < 60, "40-59", ifelse(age < 80, "60-79", "80-99"))))))%>%
   mutate(age_group = ifelse(is.na(age_group), "NA", age_group))
+
+covid %>% 
+  count(country)
 ```
 
 ## Section 1: Introduction
@@ -1066,8 +1069,6 @@ than the upper end of the confidence intervals for any other age group.
 
 ## Section 5: Discussion
 
-This section is a one to two page conclusion and discussion. This will require a summary of what you have learned about your research question along with statistical arguments supporting your conclusions. Also, critique your own methods and provide suggestions for improving your analysis. Issues pertaining to the reliability and validity of your data and appropriateness of the statistical analysis should also be discussed here. A paragraph on what you would do differently if you were able to start over with the project or what you would do next if you were going to continue work on the project should also be included.
-
 ## I. Conditional Probabilities
 
 In the early stages of our data analysis, we found that the death rates for 
@@ -1090,13 +1091,16 @@ the death rate. Therefore, we found that living in Wuhan had the greatest
 impact on the death rates within each age group. 
 
 ## II. Mean Age of Affected Individuals
-- II: 
 mean age CI interval for those infected is closer to interval to those that 
 survive isn't the case that just older people are infected, those that are 
 infected usually survive but of those infected the ones who are older are the 
 ones that die (?)
 
-To help us further determine if there exists a relationship between age and survival, we created 95% confidence intervals for the mean age of all patients, the patients that survived, and the patients that died. The 95% confidence interval for the surviving patients was slightly lower than the confidence interval for all patients, whereas the confidence interval for the mean age of patients who died was approximately 15 years higher than the others. 
+To help us further determine if there exists a relationship between age and 
+survival, we created 95% confidence intervals for the mean age of all patients, 
+the patients that survived, and the patients that died. The 95% confidence 
+interval for the surviving patients was slightly lower than the confidence 
+interval for all patients, whereas the confidence interval for the mean age of patients who died was approximately 15 years higher than the others. 
 
 ## III. Association between Age Group and Death Rate
 
@@ -1141,7 +1145,27 @@ model our less accurate and representative of the true situation.
 
 ## V. Confidence Intervals for Each Age Group
 
+## VI. Next Steps
 
+If we were to start over on this project, we would pick a data frame with more observations outside of China. For example, when considering country of origin 
+as a possible determiner of death rate, we did not have enough data for each 
+country to properly visualize P(Dead|Age) for each country. Furthermore, since 
+our research question focused on whether age was a determiner of death rate, 
+age could easily have been confounded with other variables such as heart disease 
+or diabetes status. Next time, we would find a dataset containing this 
+information. Finally, another method we could have used to determine the 
+significance of each explanatory variable on death rate would be inference for regression. The next steps we would do to continue this project would be to 
+update the data frame with current COVID-19 data. Our data frame is small, 
+contains very few data points outside of China, and only focuses on the early 
+days of the pandemic (from Jan. - Feb.) The vast amount of data that has since 
+been added about the pandemic would provide more reliable conclusions to our 
+research questions, surrounding whether death outcome is correlated with factors 
+like age and gender. Moreover, given that there are very few data points outside
+of Asian countries, we were unable to draw meaningful conclusions to our 
+research questions outside of these countries; it would be interesting to find 
+whether our conclusions would hold in the U.S. and Europe. Ideally, we would 
+want to create a way to update our data so that our analyses are done on real 
+time data.
 
 
 
