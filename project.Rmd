@@ -766,7 +766,9 @@ death rates of these two groups, the probability that the difference in death
 rate between older and younger people is 0.147 or more, which is what we
 observed in our sample data, is essentially 0. So, we can say that there the
 death rate due to COVID-19 of people aged 60 or older is significantly higher
-than that of people younger than the age of 60.
+than that of people younger than the age of 60. This makes intuitive sense
+from the plot depicted above as well, as the red line indicating our sample
+difference in death rate is significantly higher than the null distribution.
 
 
 To test the effect of gender, we will calculate the difference in the
@@ -794,10 +796,9 @@ null_dist_prop %>%
 Here, our p-value was calculated as 0.006. This is lower than our 
 aforementioned $\alpha$ level of 0.05, meaning that we have enough
 evidence to suggest that the difference in proportion of deaths between
-men and women is significantly different. This confirms our findings using
-confidence intervals.
+men and women is significantly different. 
 
-Similarly, we conducted simulation-based hypothesis tests for whether a person
+Similarly, we conducted a simulation-based hypothesis test for whether a person
 is from Wuhan, using the following hypotheses:
 $$H_0: p_{from Wuhan} = p_{not from Wuhan}$$
 $$H_A: p_{from Wuhan} \neq p_{not from Wuhan}$$
@@ -816,9 +817,9 @@ null_dist_prop %>%
 ```
 
 Here, our p-value was 0, meaning that we have enough evidence to reject our
-null hypothesis. This means that there is a significant difference in proportion
-of deaths between people from Wuhan and people not from Wuhan. This confirms
-our findings using confidence intervals.
+null hypothesis. This means that there is a significant difference in
+the proportion of deaths between people from Wuhan and people not from Wuhan.
+
 
 ## IV. Logistic Modeling to Classify Death
 
