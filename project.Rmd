@@ -713,7 +713,7 @@ the true mean age of all infected individuals. The 95% confidence interval for
 the true mean age of infected individuals who die is about 15 years higher than 
 the other two intervals. 
 
-## III. Association between Age Group and Death Rate
+## III. Hypothesis Testing
 To further our understanding of whether death rate can be attributed to
 our variables of interest, such as age, we will now employ a more
 rigorous method of testing for the effect of these variables on death rate,
@@ -747,12 +747,15 @@ null_dist_prop <- covid_age %>%
    calculate(stat = "diff in props", order = c("old", "young"))
 null_dist_prop %>% 
    get_p_value(obs_stat = diff_props, direction = "greater")
-ggplot(data = null_dist_prop, mapping = aes(x = stat)) +
-  geom_histogram(bins = 20) +
-  labs(title = "Null distribution",
-       x = "Sample proportion",
-       y = "Count") +
-  theme_bw(base_size = 16)
+
+null_dist_prop %>%
+  visualise(alpha = .5) +
+  geom_vline(xintercept = 0, color = "purple", lty = 2, size = 1) +
+   theme_minimal(base_size = 16) +
+   shade_p_value(obs_stat = diff_props, direction = "greater") +
+  labs(subtitle = 
+         "For Difference in Mean Death Rates Between Elderly/Young Pop.",
+       x = "Difference in Mean Death Rate", y = "Count")
            
 ```
 
@@ -788,8 +791,8 @@ null_dist_prop %>%
   
 ```
 
-Here, our p-value was calculated as 0.06. This is higher than our 
-aforementioned $\alpha$ level of 0.05, meaning that we do not have enough
+Here, our p-value was calculated as 0.006. This is lower than our 
+aforementioned $\alpha$ level of 0.05, meaning that we have enough
 evidence to suggest that the difference in proportion of deaths between
 men and women is significantly different. This confirms our findings using
 confidence intervals.
@@ -1103,15 +1106,28 @@ interval for the surviving patients was slightly lower than the confidence
 interval for all patients, whereas the confidence interval for the mean age of 
 patients who died was approximately 15 years higher than the others. 
 
-## III. Association between Age Group and Death Rate
+## III. Hypothesis Testing
 
-Through utilizing simulation-based two-sided hypothesis tests, we further 
-examined the impact of the patient’s gender and whether they lived in Wuhan on 
-the death rates. In both hypothesis tests, we rejected the null hypotheses that 
-there is not difference in death proportions between genders and those who did 
-and did not live in Wuhan. Therefore, there was a significant difference in the 
-proportion of deaths between females and males, as well as those who did and 
-those who did not live in Wuhan.
+To answer our research question of whether age, gender, etc. affect survival
+outcome, hypothesis tests that compare the differences in mean
+death rates is effective, because this would give us the probabilitity
+that our observed difference in means are due to random chance alone, giving
+us a better sense of the variables most likely associated with death. It is
+slightly more rigorous than a confidence interval-based test, but is not
+perfect.
+For example, though we found all of our results to be statistically 
+significant, there is still a chance that we simply committed a type I 
+error, where we mistakenly rejected a true null hypothesis. Though an 
+$\alpha$ level of 0.05 limits this possibility, there is still a 5% chance such a mistake
+occurs.
+Another notable disability of our hypothesis tests are that they fail to find
+whether our variables of interest are linked in a causal relationship to
+death rate. Though we did find statistically significant differences in 
+death rates between some groups, the hypothesis test fails to identify whether
+such a difference is due to the variable in question itself, or some other
+"confounding" variable that we failed to recognize. So further analysis through
+logistic regression must be used to fully answer our question, as the results
+obtained from these tests, though meaningful, are incomplete.
 
 ## IV. Logistic Modeling to Classify Death
 Through performing a logistic regression, we were able to create a classifier
