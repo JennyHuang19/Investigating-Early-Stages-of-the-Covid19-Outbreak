@@ -795,7 +795,7 @@ null_dist_prop %>%
   
 ```
 
-Here, our p-value was calculated as 0.006. This is lower than our 
+Here, our p-value was calculated to be 0.006. This is lower than our 
 aforementioned $\alpha$ level of 0.05, meaning that we have enough
 evidence to suggest that the difference in proportion of deaths between
 men and women is significantly different. 
