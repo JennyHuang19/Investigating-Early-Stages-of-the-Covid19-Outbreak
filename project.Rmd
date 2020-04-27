@@ -1,7 +1,7 @@
 ---
-title: "Investigating the COVID-19 Outbreak"
+title: "Investigating Early Stages of the COVID-19 Outbreak"
 author: 'Team 2!: Delaney Demark, Jenny Huang, Abby Mapes, Harshavardhan Srijay'
-subtitle: ''
+subtitle: 'Due: Wednesday April. 29th'
 output:
   html_document:
     df_print: paged
@@ -389,7 +389,8 @@ covid_class <- covid %>%
 covid_class <- na.omit(covid_class, invert = FALSE)
 ```
 
-We picked random observations to set aside as our testing data. 
+We picked 100 random observations (10% of the data) to set aside as our 
+testing data. 
 
 ```{r create-indices-4}
 set.seed(03052020)
@@ -732,7 +733,7 @@ $$H_0: p_{old} = p_{young}$$
 Our alternative hypothesis was that the true proportion of deaths ($p$), in
 the older population is greater than that of the younger age group.
 $$H_A: p_{old} > p_{young}$$
-```{r age hypothesis test}
+```{r age hypothesis test, fig.width= 5, fig.height=4}
 set.seed(123)
 covid_age <- covid %>%
   mutate(young_old = ifelse(age < 60, "young", "old"))
@@ -754,7 +755,8 @@ null_dist_prop %>%
    theme_minimal(base_size = 16) +
    shade_p_value(obs_stat = diff_props, direction = "greater") +
   labs(subtitle = 
-         "For Difference in Mean Death Rates Between Elderly/Young Pop.",
+         "For Difference in Mean Death Rates 
+       Between Elderly/Young Pop.",
        x = "Difference in Mean Death Rate", y = "Count")
            
 ```
