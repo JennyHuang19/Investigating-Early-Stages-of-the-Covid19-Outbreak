@@ -1,7 +1,7 @@
 ---
 title: "Investigating Early Stages of the COVID-19 Outbreak"
-author: 'Team 2!: Delaney Demark, Jenny Huang, Abby Mapes, Harshavardhan Srijay'
-subtitle: 'Due: Wednesday April. 29th'
+author: 'Team 2: Delaney Demark, Jenny Huang, Abby Mapes, Harshavardhan Srijay'
+subtitle: 'Due: Wednesday April 29th'
 output:
   html_document:
     df_print: paged
@@ -246,12 +246,6 @@ We plan to use the following statistical methods to answer our
 research questions about whether variables like age_group, gender, country, 
 visited_wuhan, from_wuhan play a role in variable death rate:
 
-a) Calculate the conditional probability of P(Death | Age) to determine if 
-there are any confounding variables: gender, visited_wuhan, from_wuhan, country.
-We will also keep in mind that the conclusions we draw about death rate may be 
-confounded with variables that are not included in our dataset, 
-such as smoking/drinking status, chronic disease status, BMI, etc.
-
 b) Use estimation via bootstrap to create a confidence interval 
 for the mean age of affected individuals:
 
@@ -377,7 +371,13 @@ to the mean death rate of age group "20-39."
 
 We will repeat this process for other variables such as gender or from_wuhan.
 
-d) Next, we used a logistic regression model to obtain predicted probabilities
+c) Calculate the conditional probability of P(Death | Age) to determine if 
+there are any confounding variables: gender, visited_wuhan, from_wuhan, country.
+We will also keep in mind that the conclusions we draw about death rate may be 
+confounded with variables that are not included in our dataset, 
+such as smoking/drinking status, chronic disease status, BMI, etc.
+
+d) Finally, use a logistic regression model to obtain predicted probabilities
 of an outcome of "death" given the explanatory variables in our model. 
 
 The covid_class dataset is created below, selecting for the variables of 
@@ -478,7 +478,9 @@ covid_condprob %>%
 ggplot(covid_condprob, mapping = aes(x = age_group, fill = death)) + 
   geom_bar(position = "fill") +
   labs(y = "", x = "Age Group", fill = "Dead", title =
-         "Survival Outcome by Age Group")
+         "Survival Outcome by Age Group") +
+  theme_minimal() +
+  scale_fill_manual(values = c("No" = "deepskyblue3", "Yes" = "firebrick3"))
 ```
 
 Now, we will divide the observations in our data by gender, allowing us to 
@@ -489,7 +491,7 @@ groups increase for both men and women. Thus, gender doesn't seem to act as a
 confounding variable that is correlated with both the explanatory and response 
 variables.
 
-```{r P(Dead|AgeGroup)_gender, fig.height=5, fig.width=5}
+```{r P(Dead|AgeGroup)_gender, fig.height=5, fig.width=7}
 covid_condprob %>%
   filter(!is.na(gender))%>%
   count(gender, age_group, death)%>% 
@@ -499,12 +501,16 @@ covid_condprob %>%
 
 covid_condprob %>%
   filter(!is.na(gender))%>%
+  mutate(gender = fct_recode(gender, 
+                                   "Female" = "female", "Male" = "male")) %>%
 ggplot(mapping = aes(x = age_group, fill = death)) + 
   geom_bar(position = "fill") +
   facet_wrap(.~ gender)+
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
   labs(y = "", x = "Age Group", fill = "Dead", title =
-         "Survival Outcome by Age Group by Gender")
+         "Survival Outcome by Age Group by Gender") +
+  theme_minimal() +
+  scale_fill_manual(values = c("No" = "deepskyblue3", "Yes" = "firebrick3"))
 ```
 
 Now, we will divide the patients in our dataset by whether or not the 
@@ -521,7 +527,7 @@ calculate P(Dead|Age Group) for patients that have visited Wuhan recently, so
 we can't determine whether visiting wuhan acts as a confounding variable 
 that is correlated with both the explanatory and response variables.
 
-```{r P(Dead|AgeGroup)_visited_wuhan, fig.height=5, fig.width=5}
+```{r P(Dead|AgeGroup)_visited_wuhan, fig.height=5, fig.width=7}
 covid_condprob %>%
   count(visiting_wuhan, age_group, death)%>% 
   group_by(visiting_wuhan, age_group)%>% 
@@ -529,12 +535,16 @@ covid_condprob %>%
   select(age_group, death, visiting_wuhan, prop_dead)
 
 covid_condprob %>%
+mutate(visiting_wuhan = fct_recode(visiting_wuhan, 
+                                   "Not Visited" = "0", "Visited" = "1")) %>%
 ggplot(mapping = aes(x = age_group, fill = death)) + 
   geom_bar(position = "fill") +
   facet_wrap(.~ visiting_wuhan)+
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
   labs(y = "", x = "Age Group", fill = "Dead", title =
-         "Survival Outcome by Visiting Wuhan")
+         "Survival Outcome by Visiting Wuhan") +
+  theme_minimal() +
+  scale_fill_manual(values = c("No" = "deepskyblue3", "Yes" = "firebrick3"))
 ```
 
 Now, we will divide the patients in our dataset by whether or not the 
@@ -551,7 +561,7 @@ only 14% indicated that they lived in Wuhan. However, all 11 of the 80-99 year
 old patients from Wuhan died while only 5 of the 24 80-99 year old patients 
 who were not from Wuhan died. 
 
-```{r P(Dead|AgeGroup)_from_wuhan, fig.height=5, fig.width=5}
+```{r P(Dead|AgeGroup)_from_wuhan, fig.height=5, fig.width=7}
 covid_condprob %>%
   filter(!is.na(from_wuhan))%>%
   count(from_wuhan, age_group, death)%>% 
@@ -561,12 +571,17 @@ covid_condprob %>%
 
 covid_condprob %>%
   filter(!is.na(from_wuhan))%>%
+  mutate(from_wuhan = fct_recode(from_wuhan, 
+                                   "Not Living in Wuhan" = "0", 
+                                   "Living in Wuhan" = "1")) %>%
 ggplot(mapping = aes(x = age_group, fill = death)) + 
   geom_bar(position = "fill") +
   facet_wrap(.~ from_wuhan)+
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
   labs(y = "", x = "Age Group", fill = "Dead", title =
-         "Survival Outcome by Living in Wuhan")
+         "Survival Outcome by Living in Wuhan") +
+  theme_minimal() +
+  scale_fill_manual(values = c("No" = "deepskyblue3", "Yes" = "firebrick3"))
 ```
 
 Now, we will divide the patients in our data by country, allowing us to 
@@ -579,7 +594,7 @@ we do not have enough data for each country to properly visualize P(Dead|Age)
 for each country and consider country of origin as a possible explanation of 
 our data. 
 
-```{r P(Dead|AgeGroup)_country, fig.height=5, fig.width=5}
+```{r P(Dead|AgeGroup)_country, fig.height=5, fig.width=8}
 countries_w_deaths <- covid %>%
   count(country, death) %>% 
   group_by(country) %>% 
@@ -601,7 +616,9 @@ ggplot(mapping = aes(x = age_group, fill = death)) +
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))+
   labs(y = "", x = "Age Group", fill = "Dead", title =
          "Survival Outcome by Country 
-with Recorded Deaths")
+with Recorded Deaths") +
+  theme_minimal() +
+  scale_fill_manual(values = c("No" = "deepskyblue3", "Yes" = "firebrick3"))
 ```
 
 Ultimately, a patient's gender, whether they visited Wuhan recently, and what 
@@ -780,8 +797,8 @@ percentile_ci <- age_boot_dist %>%
 percentile_ci
 
 visualize(age_boot_dist) +
- shade_confidence_interval(endpoints = percentile_ci) +
- labs(title = "Bootstrap distribution of Mean Age 
+ shade_confidence_interval(endpoints = percentile_ci, alpha = 0.3) +
+ labs(title = "Bootstrap Distribution of Mean Age 
       of Infected Patients",
       x = "Mean", y = "Count",
       caption = "Green lines represent 95% C.I. bounds") +
@@ -809,9 +826,10 @@ percentile_ci_alive <- age_boot_dist_alive %>%
 percentile_ci_alive
 
 visualize(age_boot_dist_alive) +
- shade_confidence_interval(endpoints = percentile_ci_alive, color = "blue",
-                           fill = "blue") +
- labs(title = "Bootstrap distribution of Mean Age 
+ shade_confidence_interval(endpoints = percentile_ci_alive, 
+                           color = "dodgerblue",
+                           fill = "dodgerblue", alpha = 0.3) +
+ labs(title = "Bootstrap Distribution of Mean Age 
 of Infected Patients who Survive",
       x = "Mean", y = "Count",
       caption = "Blue lines represent 95% C.I. bounds") +
@@ -839,8 +857,8 @@ percentile_ci_dead
 
 visualize(age_boot_dist_dead) +
  shade_confidence_interval(endpoints = percentile_ci_dead, color = "red",
-                           fill = "red") +
- labs(title = "Bootstrap distribution of Mean Age 
+                           fill = "red", alpha = 0.3) +
+ labs(title = "Bootstrap Distribution of Mean Age 
 of Infected Patients who Die",
       x = "Mean", y = "Count",
       caption = "Red lines represent 95% C.I. bounds") +
