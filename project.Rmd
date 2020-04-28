@@ -55,16 +55,16 @@ covid %>%
   count(country)
 ```
 
-## Section 1: Introduction
+# Section 1: Introduction
 
 Several recent reports suggest that older age groups show more severe symptoms 
 in the face of COVID-19, causing the virus to be more deadly for older age 
 groups. We want to test whether this is true by comparing the death rate of 
 older individuals to the death rate of younger individuals. Our null 
-hypothesis (H0 ) is that the death rate for older individuals is the same as 
-the death rate for younger individuals, while our alternative hypothesis (H1) 
-is that the death rate for older individuals is higher than that of younger 
-individuals. 
+hypothesis ($H_0$) is that the death rate for older individuals is the same as 
+the death rate for younger individuals, while our alternative hypothesis
+($H_1$) is that the death rate for older individuals is higher than that of
+younger individuals. 
 
 We plan on working with the data from the early stages of the COVID-19 
 outbreak from 1/20/2020 to 2/15/2020. This data set, from Kaggle, was first 
@@ -86,7 +86,7 @@ Link to Data: https://www.kaggle.com/sudalairajkumar/novel-corona-virus-2019-
 dataset#COVID19_line_list_data.csv
 
 
-## Section 2: Data Analysis Plan
+# Section 2: Data Analysis Plan
 
 Through our analysis, we will use death as our outcome variable by analyzing 
 the proportion of patients who have died, indicated by a value of “yes” for 
@@ -310,8 +310,10 @@ b) To get more information than simply seeing whether the confidence
 intervals overlap, we will also use simulation-based hypothesis testing 
 to give the exact probability estimate (p-value) for the alternate hypothesis.
 
-$$H_0: µ(death rate of young age group) = µ(death rate of old age group)$$
-$$H_1: µ(death rate of young age group) < µ(death rate of old age group)$$
+$p$ is the mean death rate of a given age group:
+
+$$H_0: p_{young} = p_{old}$$
+$$H_1: p_{young} < p_{old}$$
 
 Here, by using the bootstrap distribution, we will see where the elderly mean 
 death rate lies on the null distribution for the young mean death rate. 
@@ -349,7 +351,8 @@ group is very low.
 ```{r graph-null-dist-young, fig.height = 5, fig.width = 6}
 visualize(young_null_dist) +
   shade_p_value(obs_stat = old_boot_mean, direction = "greater") +
-  theme_minimal(base_size = 16)
+  theme_minimal(base_size = 16) +
+  labs(x = "Mean Death Rate", y = "Count")
 ```
 
 We confirm this by doing a hypothesis test and getting the p_value,
@@ -365,11 +368,12 @@ p_value <- covid_young_age %>%
   get_p_value(obs_stat = old_boot_mean, direction = "greater")
 ```
 
-Thus, with an alpha level of 0.05, we have sufficient evidence to reject 
+Thus, with an $\alpha$ level of 0.05, we have sufficient evidence to reject 
 the null hypothesis that the mean death rate for the age group "80-99" is equal
 to the mean death rate of age group "20-39." 
 
-We will repeat this process for other variables such as gender or from_wuhan.
+We will also conduct hypothesis tests for other variables such as gender or
+from_wuhan.
 
 c) Calculate the conditional probability of P(Death | Age) to determine if 
 there are any confounding variables: gender, visited_wuhan, from_wuhan, country.
@@ -446,13 +450,13 @@ We plan to create a classifier to classify survival status based on the above
 variables. Then, we will determine how well these variables predict death by
 looking at the accuracy of the logistic model.
 
-## Section 3: Data
+# Section 3: Data
 The dimensions of our dataset are 1,085 rows by 16 columns.
 ```{r glimpse-data}
 glimpse(covid)
 ```
 
-## Section 4: Methods and Results
+# Section 4: Methods and Results
 
 ## I. Confidence Intervals for Each Age Group
 
@@ -1105,7 +1109,7 @@ regression model. Given this fairly high prediction accuracy, we find
 the predictor variables age, gender, visiting_wuhan, and from_wuhan to be
 good predictors of death.
 
-## Section 5: Discussion
+# Section 5: Discussion
 
 ## I. Confidence Intervals for Each Age Group
 Using bootstrapping, we were able to calculate 95% confidence intervals for the 
