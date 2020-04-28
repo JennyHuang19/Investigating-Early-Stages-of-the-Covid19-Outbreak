@@ -1141,10 +1141,6 @@ there is more variation in death rate within the 80-99 year old age group than
 variation in death rate within the 0-19 year old age group. 
 
 ## II. Mean Age of Affected Individuals
-mean age CI interval for those infected is closer to interval to those that 
-survive isn't the case that just older people are infected, those that are 
-infected usually survive but of those infected the ones who are older are the 
-ones that die (?)
 
 To help us further determine if there exists a relationship between age and 
 survival, we created 95% confidence intervals for the mean age of all patients, 
