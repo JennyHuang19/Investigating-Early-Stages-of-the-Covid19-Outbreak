@@ -730,7 +730,7 @@ we would have chosen 58 then, to be our cut-off age, but as our age group
 was defined to be 40-59, we chose 60 to be our cut-off age. 
 
 Unlike our initial attempt in our data analysis section, here we will
-create a null distribution from the difference in mean death rates between our
+create a null distribution from the difference in death proportions between our
 two groups, rather than a distribution of mean death rates for only the "young"
 group. Though computationally very similar, we felt this approach was more
 intuitive to read from a plot.
@@ -773,9 +773,9 @@ null_dist_prop %>%
    theme_minimal(base_size = 16) +
    shade_p_value(obs_stat = diff_props, direction = "greater") +
   labs(subtitle = 
-         "For Difference in Mean Death Rates 
-       Between Elderly/Young Pop.",
-       x = "Difference in Mean Death Rate", y = "Count")
+         "For Difference in Proportion of Deaths 
+       Between Elderly/Young COVID Patients",
+       x = "Difference in Proportions of Deaths", y = "Count")
            
 ```
 
