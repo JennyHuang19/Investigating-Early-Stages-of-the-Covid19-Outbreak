@@ -246,7 +246,7 @@ We plan to use the following statistical methods to answer our
 research questions about whether variables like age_group, gender, country, 
 visited_wuhan, from_wuhan play a role in variable death rate:
 
-b) Use estimation via bootstrap to create a confidence interval 
+a) Use estimation via bootstrap to create a confidence interval 
 for the mean age of affected individuals:
 
 For each age_group, we will take bootstrap samples, calculate the mean death 
@@ -306,7 +306,7 @@ lower and upper end of the confidence interval for the older age group
 group (0.03668033 and 0.06598361).
 
 
-c) To get more information than sipmly seeing whether the confidence 
+b) To get more information than simply seeing whether the confidence 
 intervals overlap, we will also use simulation-based hypothesis testing 
 to give the exact probability estimate (p-value) for the alternate hypothesis.
 
@@ -454,8 +454,370 @@ glimpse(covid)
 
 ## Section 4: Methods and Results
 
-## I. Conditional Probabilities
-First, we will calculate the conditional probability of P(Death | Age) for 
+## I. Confidence Intervals for Each Age Group
+
+We will now focus on one's age, and its impact on death rate from COVID-19.
+For each age group, we will take bootstrap samples, calculate the mean 
+death rate, and obtain a 95% confidence interval for the true mean death rate 
+of that particular age group to see if the mean death rates overlap for each 
+age group. To do so, we must assume that our sample is representative 
+of the population. Additionally, in all age groups, there are more than 
+5 observations from our original sample, so, our original sample 
+for each confidence interval is greater than 5 for all cases, so it is not 
+too small. Since our original sample is not too small and is representative 
+of the population, we can create a bootstrap confidence interval.
+
+First, we will create a 95% confidence interval for population mean death rate 
+of individuals between 0 and 19 who are infected with COVID-19. As seen below, 
+we are 95% confident that the actual population mean death rate of infected 
+individuals between 0 and 19 is between 0.06 and 0.09.
+
+```{r ci-youngest}
+covid_youngst <- covid %>%
+  filter(age_group == "0-19") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_youngst <- covid_youngst %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+int_0 <- boot_dist_youngst %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+int_0
+```
+
+Now, we will create a 95% confidence interval for population mean death rate 
+of individuals between 20 and 39 who are infected with COVID-19. As seen below, 
+we are 95% confident that the actual population mean death rate of infected 
+individuals between 20 and 39 is between 0.04 and 0.07.
+
+```{r ci-young-age}
+covid_young_age <- covid %>%
+  filter(age_group == "20-39") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_young <- covid_young_age %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+int_20 <- boot_dist_young %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+int_20
+```
+
+Now, we will create a 95% confidence interval for population mean death rate 
+of individuals between 40 and 59 who are infected with COVID-19. As seen below, 
+we are 95% confident that the actual population mean death rate of infected 
+individuals between 40 and 59 is between 0.03 and 0.07.
+
+```{r ci-middle-1}
+covid_mid_1 <- covid %>%
+  filter(age_group == "40-59") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_mid1 <- covid_mid_1 %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+int_40 <- boot_dist_mid1 %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+int_40
+```
+
+Now, we will create a 95% confidence interval for population mean death rate 
+of individuals between 60 and 79 who are infected with COVID-19. As seen below, 
+we are 95% confident that the actual population mean death rate of infected 
+individuals between 60 and 79 is between 0.03 and 0.08.
+
+```{r ci-middle-2}
+covid_mid_2 <- covid %>%
+  filter(age_group == "60-79") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_mid2 <- covid_mid_2 %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+int_60 <- boot_dist_mid2 %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+int_60
+```
+
+Finally, we will create a 95% confidence interval for population mean death 
+rate of individuals between 80 and 99 who are infected with COVID-19. 
+As seen below, we are 95% confident that the actual population mean death 
+rate of infected individuals between 80 and 99 is between 0.05 and 0.16.
+
+```{r ci-old-age}
+covid_old_age <- covid %>%
+  filter(age_group == "80-99") %>%
+  count(age) %>% 
+  mutate(death_rate = n / sum(n))
+
+boot_dist_old <- covid_old_age %>%
+  specify(response = death_rate) %>% 
+  generate(reps = 15000, type = "bootstrap") %>% 
+  calculate(stat = "mean")
+
+
+int_old <- boot_dist_old %>%
+  summarize(lower_bound = quantile(stat, 0.025),
+            upper_bound = quantile(stat, 0.975))
+
+int_old
+```
+
+The confidence intervals all seem to overlap, so we cannot claim that there 
+is significant difference between the mean death rate of individuals in the 
+different age groups. However, the upper end of the confidence interval for 
+the oldest age group, 80 to 99 year old patients, is at least .07 higher 
+than the upper end of the confidence intervals for any other age group.
+
+## II. Mean Age of Affected Individuals
+
+Now, rather than comparing confidence intervals for each age group, we will
+attampt to compare confidence intervals for the mean age of each disease
+outcome. This will show us how age impacts disease outcomes.
+We will create a 95% confidence interval for the population mean age of 
+individuals infected with COVID-19, the population mean age of those infected 
+with COVID-19 who survive, and the population mean age of those infected with
+COVID-19 who die. To do so, we must assume that our sample is representative 
+of the population. Additionally, in all three cases, there are more than 
+5 observations in our original sample, since our data includes 1085 total 
+infected patients, 1022 alive patients, and 63 dead patients, so, our original 
+sample is greater than 5 for all cases, so it is not too small. Since our 
+original sample is not too small and is representative of the population, 
+we can create a bootstrap confidence interval.
+
+First, we will create a 95% confidence interval for the population mean age of 
+individuals infected with COVID-19. As seen below, we are 95% confident that 
+the actual population mean age of infected individuals is between 
+48.30 and	50.73.
+
+```{r age_conf_int_total, fig.height=5, fig.width=5}
+age_boot_dist <- covid %>%
+  #filter(death == "No") %>%
+  specify(response = age) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+  
+ 
+percentile_ci <- age_boot_dist %>% 
+  summarize(lower_bound = quantile(stat, 0.025),
+           upper_bound = quantile(stat, 0.975))
+
+percentile_ci
+
+visualize(age_boot_dist) +
+ shade_confidence_interval(endpoints = percentile_ci, alpha = 0.3) +
+ labs(title = "Bootstrap Distribution of Mean Age 
+      of Infected Patients",
+      x = "Mean", y = "Count",
+      caption = "Green lines represent 95% C.I. bounds") +
+ theme_minimal(base_size = 16)
+```
+
+Now, we will create a 95% confidence interval for the population mean age of 
+individuals infected with COVID-19 who survive. As seen below, we are 95% 
+confident that the actual population mean age of infected individuals who 
+survive COVID-19 is between 46.82 and 49.30.	
+
+
+```{r age_conf_int_alive, fig.height=5, fig.width=5}
+age_boot_dist_alive <- covid %>%
+  filter(death == "No") %>%
+  specify(response = age) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+  
+ 
+percentile_ci_alive <- age_boot_dist_alive %>% 
+  summarize(lower_bound = quantile(stat, 0.025),
+           upper_bound = quantile(stat, 0.975))
+
+percentile_ci_alive
+
+visualize(age_boot_dist_alive) +
+ shade_confidence_interval(endpoints = percentile_ci_alive, 
+                           color = "dodgerblue",
+                           fill = "dodgerblue", alpha = 0.3) +
+ labs(title = "Bootstrap Distribution of Mean Age 
+of Infected Patients who Survive",
+      x = "Mean", y = "Count",
+      caption = "Blue lines represent 95% C.I. bounds") +
+ theme_minimal(base_size = 16)
+```
+
+Now, we will create a 95% confidence interval for the population mean age of 
+individuals infected with COVID-19 who die. As seen below, we are 95% 
+confident that the actual population mean age of infected individuals who 
+die from COVID-19 is between 65.13 and 71.98.		
+
+```{r age_conf_int_dead, fig.height=5, fig.width=5}
+age_boot_dist_dead <- covid %>%
+  filter(death == "Yes") %>%
+  specify(response = age) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+  
+ 
+percentile_ci_dead <- age_boot_dist_dead %>% 
+  summarize(lower_bound = quantile(stat, 0.025),
+           upper_bound = quantile(stat, 0.975))
+
+percentile_ci_dead
+
+visualize(age_boot_dist_dead) +
+ shade_confidence_interval(endpoints = percentile_ci_dead, color = "red",
+                           fill = "red", alpha = 0.3) +
+ labs(title = "Bootstrap Distribution of Mean Age 
+of Infected Patients who Die",
+      x = "Mean", y = "Count",
+      caption = "Red lines represent 95% C.I. bounds") +
+ theme_minimal(base_size = 16)
+```
+
+From the three 95% confidence intervals calculated above, we observe that the 
+95% confidence interval for the true mean age of infected individuals who 
+survive is the lowest, overlapping a year with the 95% confidence interval for 
+the true mean age of all infected individuals. The 95% confidence interval for 
+the true mean age of infected individuals who die is about 15 years higher than 
+the other two intervals. 
+
+## III. Hypothesis Testing
+
+To further our understanding of whether death rate can be attributed to
+our variables of interest, such as age, we will now employ a more
+rigorous method of testing for the effect of these variables on death rate,
+beyond that of confidence intervals, using simulation-based hypothesis 
+tests, under the $\alpha = 0.05$ level. 
+
+First, we conduct a one-sided hypothesis test for the age variable. We chose
+to delineate "old" observations from "young" observations through the 60 years
+of age mark, as the mean age of deaths due to COVID-19 in our sample was
+approximately 68, and the mean age of survival was approximately 48. Ideally,
+we would have chosen 58 then, to be our cut-off age, but as our age group
+was defined to be 40-59, we chose 60 to be our cut-off age. 
+However, unlike our initial attempt in our data analysis section, here we will
+create a null distribution from the difference in mean death rates between our
+two groups, rather than a distribution of mean death rates for only the "young"
+group. Though computationally very similar, we felt this approach was more
+intuitive to read from a plot.
+In this hypothesis test, our null hypothesis was that the proportion of deaths
+in both the younger and older groups would be equal. 
+$$H_0: p_{old} = p_{young}$$
+Our alternative hypothesis was that the true proportion of deaths ($p$), in
+the older population is greater than that of the younger age group.
+$$H_A: p_{old} > p_{young}$$
+```{r age hypothesis test, fig.width= 7, fig.height=6}
+set.seed(123)
+covid_age <- covid %>%
+  mutate(young_old = ifelse(age < 60, "young", "old"))
+diff_props <- covid_age %>%
+  specify(death ~ young_old, success = "Yes") %>%
+  calculate(stat = "diff in props", order = c("old", "young"))
+diff_props
+null_dist_prop <- covid_age %>% 
+   specify(death ~ young_old, success = "Yes") %>%
+   hypothesize(null = "independence") %>% 
+   generate(reps = 2000, type = "permute") %>% 
+   calculate(stat = "diff in props", order = c("old", "young"))
+null_dist_prop %>% 
+   get_p_value(obs_stat = diff_props, direction = "greater")
+
+null_dist_prop %>%
+  visualise(alpha = .5) +
+  geom_vline(xintercept = 0, color = "purple", lty = 2, size = 1) +
+   theme_minimal(base_size = 16) +
+   shade_p_value(obs_stat = diff_props, direction = "greater") +
+  labs(subtitle = 
+         "For Difference in Mean Death Rates 
+       Between Elderly/Young Pop.",
+       x = "Difference in Mean Death Rate", y = "Count")
+           
+```
+
+From this simulation-based hypothesis test, we obtained a p-value of 0, 
+meaning we can reject our null hypothesis, as this is less than our $\alpha$
+level of 0.05. This p-value means that assuming there is no difference in the
+death rates of these two groups, the probability that the difference in death
+rate between older and younger people is 0.147 or more, which is what we
+observed in our sample data, is essentially 0. So, we can say that there the
+death rate due to COVID-19 of people aged 60 or older is significantly higher
+than that of people younger than the age of 60. This makes intuitive sense
+from the plot depicted above as well, as the red line indicating our sample
+difference in death rate is significantly higher than the null distribution.
+
+
+To test the effect of gender, we will calculate the difference in the
+proportion of deaths between men and women in our sample. Our null hypothesis
+is that there is no difference in the proportions of deaths between genders:
+$$H_0: p_{male} = p_{female}$$
+Our alternative hypothesis is that the proportion of deaths between the two
+genders is not equal:
+$$ H_A: p_{male} \neq p_{female}$$
+```{r gender hypothesis test}
+set.seed(1)
+diff_props <- covid %>%
+  specify(death ~ gender, success = "Yes") %>%
+  calculate(stat = "diff in props", order = c("male", "female"))
+null_dist_prop <- covid %>% 
+   specify(death ~ gender, success = "Yes") %>%
+   hypothesize(null = "independence") %>% 
+   generate(reps = 1000, type = "permute") %>% 
+   calculate(stat = "diff in props", order = c("male", "female"))
+null_dist_prop %>% 
+   get_p_value(obs_stat = diff_props, direction = "two_sided")
+  
+```
+
+Here, our p-value was calculated to be 0.006. This is lower than our 
+aforementioned $\alpha$ level of 0.05, meaning that we have enough
+evidence to suggest that the difference in proportion of deaths between
+men and women is significantly different. 
+
+Similarly, we conducted a simulation-based hypothesis test for whether a person
+is from Wuhan, using the following hypotheses:
+$$H_0: p_{from Wuhan} = p_{not from Wuhan}$$
+$$H_A: p_{from Wuhan} \neq p_{not from Wuhan}$$
+
+```{r wuhan hypothesis test}
+diff_props <- covid %>%
+  specify(death ~ from_wuhan, success = "Yes") %>%
+  calculate(stat = "diff in props", order = c("1", "0"))
+null_dist_prop <- covid %>% 
+   specify(death ~ from_wuhan, success = "Yes") %>%
+   hypothesize(null = "independence") %>% 
+   generate(reps = 1000, type = "permute") %>% 
+   calculate(stat = "diff in props", order = c("1", "0"))
+null_dist_prop %>% 
+   get_p_value(obs_stat = diff_props, direction = "two_sided")
+```
+
+Here, our p-value was 0, meaning that we have enough evidence to reject our
+null hypothesis. This means that there is a significant difference in
+the proportion of deaths between people from Wuhan and people not from Wuhan.
+
+## IV. Conditional Probabilities
+Given our results from hypothesis testing, to find causual relationships 
+between our aforementioned variables of interest and death rate, we must
+first calculate the conditional probability of P(Death | Age) for 
 each age group and determine if there are any confounding variables: 
 gender, visited_wuhan, from_wuhan, country. Below, we calculate and visualize 
 P(Dead|Age Group). From the visualization, we see that P(Dead|Age Group) 
@@ -626,370 +988,10 @@ country they are from doesn't seem to affect the
 association between a patient's age group and their survival status from 
 COVID-19.
 
-## II. Confidence Intervals for Each Age Group
-
-We will now focus on one's age, and its impact on death rate from COVID-19.
-For each age group, we will take bootstrap samples, calculate the mean 
-death rate, and obtain a 95% confidence interval for the true mean death rate 
-of that particular age group to see if the mean death rates overlap for each 
-age group. To do so, we must assume that our sample is representative 
-of the population. Additionally, in all age groups, there are more than 
-5 observations from our original sample, so, our original sample 
-for each confidence interval is greater than 5 for all cases, so it is not 
-too small. Since our original sample is not too small and is representative 
-of the population, we can create a bootstrap confidence interval.
-
-First, we will create a 95% confidence interval for population mean death rate 
-of individuals between 0 and 19 who are infected with COVID-19. As seen below, 
-we are 95% confident that the actual population mean death rate of infected 
-individuals between 0 and 19 is between 0.06 and 0.09.
-
-```{r ci-youngest}
-covid_youngst <- covid %>%
-  filter(age_group == "0-19") %>%
-  count(age) %>% 
-  mutate(death_rate = n / sum(n))
-
-boot_dist_youngst <- covid_youngst %>%
-  specify(response = death_rate) %>% 
-  generate(reps = 15000, type = "bootstrap") %>% 
-  calculate(stat = "mean")
-
-
-int_0 <- boot_dist_youngst %>%
-  summarize(lower_bound = quantile(stat, 0.025),
-            upper_bound = quantile(stat, 0.975))
-int_0
-```
-
-Now, we will create a 95% confidence interval for population mean death rate 
-of individuals between 20 and 39 who are infected with COVID-19. As seen below, 
-we are 95% confident that the actual population mean death rate of infected 
-individuals between 20 and 39 is between 0.04 and 0.07.
-
-```{r ci-young-age}
-covid_young_age <- covid %>%
-  filter(age_group == "20-39") %>%
-  count(age) %>% 
-  mutate(death_rate = n / sum(n))
-
-boot_dist_young <- covid_young_age %>%
-  specify(response = death_rate) %>% 
-  generate(reps = 15000, type = "bootstrap") %>% 
-  calculate(stat = "mean")
-
-
-int_20 <- boot_dist_young %>%
-  summarize(lower_bound = quantile(stat, 0.025),
-            upper_bound = quantile(stat, 0.975))
-int_20
-```
-
-Now, we will create a 95% confidence interval for population mean death rate 
-of individuals between 40 and 59 who are infected with COVID-19. As seen below, 
-we are 95% confident that the actual population mean death rate of infected 
-individuals between 40 and 59 is between 0.03 and 0.07.
-
-```{r ci-middle-1}
-covid_mid_1 <- covid %>%
-  filter(age_group == "40-59") %>%
-  count(age) %>% 
-  mutate(death_rate = n / sum(n))
-
-boot_dist_mid1 <- covid_mid_1 %>%
-  specify(response = death_rate) %>% 
-  generate(reps = 15000, type = "bootstrap") %>% 
-  calculate(stat = "mean")
-
-
-int_40 <- boot_dist_mid1 %>%
-  summarize(lower_bound = quantile(stat, 0.025),
-            upper_bound = quantile(stat, 0.975))
-int_40
-```
-
-Now, we will create a 95% confidence interval for population mean death rate 
-of individuals between 60 and 79 who are infected with COVID-19. As seen below, 
-we are 95% confident that the actual population mean death rate of infected 
-individuals between 60 and 79 is between 0.03 and 0.08.
-
-```{r ci-middle-2}
-covid_mid_2 <- covid %>%
-  filter(age_group == "60-79") %>%
-  count(age) %>% 
-  mutate(death_rate = n / sum(n))
-
-boot_dist_mid2 <- covid_mid_2 %>%
-  specify(response = death_rate) %>% 
-  generate(reps = 15000, type = "bootstrap") %>% 
-  calculate(stat = "mean")
-
-
-int_60 <- boot_dist_mid2 %>%
-  summarize(lower_bound = quantile(stat, 0.025),
-            upper_bound = quantile(stat, 0.975))
-int_60
-```
-
-Finally, we will create a 95% confidence interval for population mean death 
-rate of individuals between 80 and 99 who are infected with COVID-19. 
-As seen below, we are 95% confident that the actual population mean death 
-rate of infected individuals between 80 and 99 is between 0.05 and 0.16.
-
-```{r ci-old-age}
-covid_old_age <- covid %>%
-  filter(age_group == "80-99") %>%
-  count(age) %>% 
-  mutate(death_rate = n / sum(n))
-
-boot_dist_old <- covid_old_age %>%
-  specify(response = death_rate) %>% 
-  generate(reps = 15000, type = "bootstrap") %>% 
-  calculate(stat = "mean")
-
-
-int_old <- boot_dist_old %>%
-  summarize(lower_bound = quantile(stat, 0.025),
-            upper_bound = quantile(stat, 0.975))
-
-int_old
-```
-
-The confidence intervals all seem to overlap, so we cannot claim that there 
-is significant difference between the mean death rate of individuals in the 
-different age groups. However, the upper end of the confidence interval for 
-the oldest age group, 80 to 99 year old patients, is at least .07 higher 
-than the upper end of the confidence intervals for any other age group.
-
-## III. Mean Age of Affected Individuals
-
-Now, rather than comparing confidence intervals for each age group, we will
-attampt to compare confidence intervals for the mean age of each disease
-outcome. This will show us how age impacts disease outcomes.
-We will create a 95% confidence interval for the population mean age of 
-individuals infected with COVID-19, the population mean age of those infected 
-with COVID-19 who survive, and the population mean age of those infected with
-COVID-19 who die. To do so, we must assume that our sample is representative 
-of the population. Additionally, in all three cases, there are more than 
-5 observations in our original sample, since our data includes 1085 total 
-infected patients, 1022 alive patients, and 63 dead patients, so, our original 
-sample is greater than 5 for all cases, so it is not too small. Since our 
-original sample is not too small and is representative of the population, 
-we can create a bootstrap confidence interval.
-
-First, we will create a 95% confidence interval for the population mean age of 
-individuals infected with COVID-19. As seen below, we are 95% confident that 
-the actual population mean age of infected individuals is between 
-48.30 and	50.73.
-
-```{r age_conf_int_total, fig.height=5, fig.width=5}
-age_boot_dist <- covid %>%
-  #filter(death == "No") %>%
-  specify(response = age) %>%
-  generate(reps = 5000, type = "bootstrap") %>%
-  calculate(stat = "mean")
-  
- 
-percentile_ci <- age_boot_dist %>% 
-  summarize(lower_bound = quantile(stat, 0.025),
-           upper_bound = quantile(stat, 0.975))
-
-percentile_ci
-
-visualize(age_boot_dist) +
- shade_confidence_interval(endpoints = percentile_ci, alpha = 0.3) +
- labs(title = "Bootstrap Distribution of Mean Age 
-      of Infected Patients",
-      x = "Mean", y = "Count",
-      caption = "Green lines represent 95% C.I. bounds") +
- theme_minimal(base_size = 16)
-```
-
-Now, we will create a 95% confidence interval for the population mean age of 
-individuals infected with COVID-19 who survive. As seen below, we are 95% 
-confident that the actual population mean age of infected individuals who 
-survive COVID-19 is between 46.82 and 49.30.	
-
-
-```{r age_conf_int_alive, fig.height=5, fig.width=5}
-age_boot_dist_alive <- covid %>%
-  filter(death == "No") %>%
-  specify(response = age) %>%
-  generate(reps = 5000, type = "bootstrap") %>%
-  calculate(stat = "mean")
-  
- 
-percentile_ci_alive <- age_boot_dist_alive %>% 
-  summarize(lower_bound = quantile(stat, 0.025),
-           upper_bound = quantile(stat, 0.975))
-
-percentile_ci_alive
-
-visualize(age_boot_dist_alive) +
- shade_confidence_interval(endpoints = percentile_ci_alive, 
-                           color = "dodgerblue",
-                           fill = "dodgerblue", alpha = 0.3) +
- labs(title = "Bootstrap Distribution of Mean Age 
-of Infected Patients who Survive",
-      x = "Mean", y = "Count",
-      caption = "Blue lines represent 95% C.I. bounds") +
- theme_minimal(base_size = 16)
-```
-
-Now, we will create a 95% confidence interval for the population mean age of 
-individuals infected with COVID-19 who die. As seen below, we are 95% 
-confident that the actual population mean age of infected individuals who 
-die from COVID-19 is between 65.13 and 71.98.		
-
-```{r age_conf_int_dead, fig.height=5, fig.width=5}
-age_boot_dist_dead <- covid %>%
-  filter(death == "Yes") %>%
-  specify(response = age) %>%
-  generate(reps = 5000, type = "bootstrap") %>%
-  calculate(stat = "mean")
-  
- 
-percentile_ci_dead <- age_boot_dist_dead %>% 
-  summarize(lower_bound = quantile(stat, 0.025),
-           upper_bound = quantile(stat, 0.975))
-
-percentile_ci_dead
-
-visualize(age_boot_dist_dead) +
- shade_confidence_interval(endpoints = percentile_ci_dead, color = "red",
-                           fill = "red", alpha = 0.3) +
- labs(title = "Bootstrap Distribution of Mean Age 
-of Infected Patients who Die",
-      x = "Mean", y = "Count",
-      caption = "Red lines represent 95% C.I. bounds") +
- theme_minimal(base_size = 16)
-```
-
-From the three 95% confidence intervals calculated above, we observe that the 
-95% confidence interval for the true mean age of infected individuals who 
-survive is the lowest, overlapping a year with the 95% confidence interval for 
-the true mean age of all infected individuals. The 95% confidence interval for 
-the true mean age of infected individuals who die is about 15 years higher than 
-the other two intervals. 
-
-## IV. Hypothesis Testing
-
-To further our understanding of whether death rate can be attributed to
-our variables of interest, such as age, we will now employ a more
-rigorous method of testing for the effect of these variables on death rate,
-beyond that of confidence intervals, using simulation-based hypothesis 
-tests, under the $\alpha = 0.05$ level. 
-
-First, we conduct a one-sided hypothesis test for the age variable. We chose
-to delineate "old" observations from "young" observations through the 60 years
-of age mark, as the mean age of deaths due to COVID-19 in our sample was
-approximately 68, and the mean age of survival was approximately 48. Ideally,
-we would have chosen 58 then, to be our cut-off age, but as our age group
-was defined to be 40-59, we chose 60 to be our cut-off age. 
-However, unlike our initial attempt in our data analysis section, here we will
-create a null distribution from the difference in mean death rates between our
-two groups, rather than a distribution of mean death rates for only the "young"
-group. Though computationally very similar, we felt this approach was more
-intuitive to read from a plot.
-In this hypothesis test, our null hypothesis was that the proportion of deaths
-in both the younger and older groups would be equal. 
-$$H_0: p_{old} = p_{young}$$
-Our alternative hypothesis was that the true proportion of deaths ($p$), in
-the older population is greater than that of the younger age group.
-$$H_A: p_{old} > p_{young}$$
-```{r age hypothesis test, fig.width= 7, fig.height=6}
-set.seed(123)
-covid_age <- covid %>%
-  mutate(young_old = ifelse(age < 60, "young", "old"))
-diff_props <- covid_age %>%
-  specify(death ~ young_old, success = "Yes") %>%
-  calculate(stat = "diff in props", order = c("old", "young"))
-diff_props
-null_dist_prop <- covid_age %>% 
-   specify(death ~ young_old, success = "Yes") %>%
-   hypothesize(null = "independence") %>% 
-   generate(reps = 2000, type = "permute") %>% 
-   calculate(stat = "diff in props", order = c("old", "young"))
-null_dist_prop %>% 
-   get_p_value(obs_stat = diff_props, direction = "greater")
-
-null_dist_prop %>%
-  visualise(alpha = .5) +
-  geom_vline(xintercept = 0, color = "purple", lty = 2, size = 1) +
-   theme_minimal(base_size = 16) +
-   shade_p_value(obs_stat = diff_props, direction = "greater") +
-  labs(subtitle = 
-         "For Difference in Mean Death Rates 
-       Between Elderly/Young Pop.",
-       x = "Difference in Mean Death Rate", y = "Count")
-           
-```
-
-From this simulation-based hypothesis test, we obtained a p-value of 0, 
-meaning we can reject our null hypothesis, as this is less than our $\alpha$
-level of 0.05. This p-value means that assuming there is no difference in the
-death rates of these two groups, the probability that the difference in death
-rate between older and younger people is 0.147 or more, which is what we
-observed in our sample data, is essentially 0. So, we can say that there the
-death rate due to COVID-19 of people aged 60 or older is significantly higher
-than that of people younger than the age of 60. This makes intuitive sense
-from the plot depicted above as well, as the red line indicating our sample
-difference in death rate is significantly higher than the null distribution.
-
-
-To test the effect of gender, we will calculate the difference in the
-proportion of deaths between men and women in our sample. Our null hypothesis
-is that there is no difference in the proportions of deaths between genders:
-$$H_0: p_{male} = p_{female}$$
-Our alternative hypothesis is that the proportion of deaths between the two
-genders is not equal:
-$$ H_A: p_{male} \neq p_{female}$$
-```{r gender hypothesis test}
-set.seed(1)
-diff_props <- covid %>%
-  specify(death ~ gender, success = "Yes") %>%
-  calculate(stat = "diff in props", order = c("male", "female"))
-null_dist_prop <- covid %>% 
-   specify(death ~ gender, success = "Yes") %>%
-   hypothesize(null = "independence") %>% 
-   generate(reps = 1000, type = "permute") %>% 
-   calculate(stat = "diff in props", order = c("male", "female"))
-null_dist_prop %>% 
-   get_p_value(obs_stat = diff_props, direction = "two_sided")
-  
-```
-
-Here, our p-value was calculated to be 0.006. This is lower than our 
-aforementioned $\alpha$ level of 0.05, meaning that we have enough
-evidence to suggest that the difference in proportion of deaths between
-men and women is significantly different. 
-
-Similarly, we conducted a simulation-based hypothesis test for whether a person
-is from Wuhan, using the following hypotheses:
-$$H_0: p_{from Wuhan} = p_{not from Wuhan}$$
-$$H_A: p_{from Wuhan} \neq p_{not from Wuhan}$$
-
-```{r wuhan hypothesis test}
-diff_props <- covid %>%
-  specify(death ~ from_wuhan, success = "Yes") %>%
-  calculate(stat = "diff in props", order = c("1", "0"))
-null_dist_prop <- covid %>% 
-   specify(death ~ from_wuhan, success = "Yes") %>%
-   hypothesize(null = "independence") %>% 
-   generate(reps = 1000, type = "permute") %>% 
-   calculate(stat = "diff in props", order = c("1", "0"))
-null_dist_prop %>% 
-   get_p_value(obs_stat = diff_props, direction = "two_sided")
-```
-
-Here, our p-value was 0, meaning that we have enough evidence to reject our
-null hypothesis. This means that there is a significant difference in
-the proportion of deaths between people from Wuhan and people not from Wuhan.
-
-
 ## V. Logistic Modeling to Classify Death
 
-Next, we used a logistic regression model to obtain predicted probabilities
+Given our understanding now of the confounding effects within our variables,
+we will now use a logistic regression model to obtain predicted probabilities
 for an outcome "death == yes" given the explanatory variables in our model. 
 We will determine whether the variables of interest are good predictors of 
 "death" through looking at the accuracy of our logistic regression model.
@@ -1105,28 +1107,7 @@ good predictors of death.
 
 ## Section 5: Discussion
 
-## I. Conditional Probabilities
-
-In the early stages of our data analysis, we found that the death rates for 
-each age group increased as the ages increased, so we explored the impact of a 
-variety of variables on the death rate per age group. For each of the potential 
-explanatory variables, we analyzed the proportion of patients that died, 
-grouping them by the categories of the variable. First, we investigated whether 
-gender was a possible confounding variable to explain the increase in death 
-rates among the age groups. Upon examining the proportions of dead patients per 
-age group faceted by gender,  it became clear that the gender was not a 
-confounding variable. Although we wanted to determine if patients visiting
-Wuhan had an impact on the death rate, only 18% of patients indicated that they 
-had visited Wuhan, so the data for this relationship was insufficient to reach 
-any conclusions. Next, we looked into the impact of the patients living in
-Wuhan on the survival rate within each age group; we found that the death
-rate among patients living in Wuhan was higher than those not living in Wuhan 
-for age groups above 40. Again, the limitations of the data set prevented us 
-from concluding any significant impact the country of the case could have on 
-the death rate. Therefore, we found that living in Wuhan had the greatest 
-impact on the death rates within each age group. 
-
-## II. Confidence Intervals for Each Age Group
+## I. Confidence Intervals for Each Age Group
 Using bootstrapping, we were able to calculate 95% confidence intervals for the 
 mean death rate of each age group in our dataset. For the 0-19 age group, our 
 95% confidence interval was (.06, .09). For the 20-39 age group, our 95% 
@@ -1159,7 +1140,7 @@ age group was around .03, which is much smaller than .11, indicating that
 there is more variation in death rate within the 80-99 year old age group than 
 variation in death rate within the 0-19 year old age group. 
 
-## III. Mean Age of Affected Individuals
+## II. Mean Age of Affected Individuals
 mean age CI interval for those infected is closer to interval to those that 
 survive isn't the case that just older people are infected, those that are 
 infected usually survive but of those infected the ones who are older are the 
@@ -1172,7 +1153,7 @@ interval for the surviving patients was slightly lower than the confidence
 interval for all patients, whereas the confidence interval for the mean age of 
 patients who died was approximately 15 years higher than the others. 
 
-## IV. Hypothesis Testing
+## III. Hypothesis Testing
 
 To answer our research question of whether age, gender, etc. affect survival
 outcome, hypothesis tests that compare the differences in mean
@@ -1194,6 +1175,27 @@ such a difference is due to the variable in question itself, or some other
 "confounding" variable that we failed to recognize. So further analysis through
 logistic regression must be used to fully answer our question, as the results
 obtained from these tests, though meaningful, are incomplete.
+
+## IV. Conditional Probabilities
+
+In the early stages of our data analysis, we found that the death rates for 
+each age group increased as the ages increased, so we explored the impact of a 
+variety of variables on the death rate per age group. For each of the potential 
+explanatory variables, we analyzed the proportion of patients that died, 
+grouping them by the categories of the variable. First, we investigated whether 
+gender was a possible confounding variable to explain the increase in death 
+rates among the age groups. Upon examining the proportions of dead patients per 
+age group faceted by gender,  it became clear that the gender was not a 
+confounding variable. Although we wanted to determine if patients visiting
+Wuhan had an impact on the death rate, only 18% of patients indicated that they 
+had visited Wuhan, so the data for this relationship was insufficient to reach 
+any conclusions. Next, we looked into the impact of the patients living in
+Wuhan on the survival rate within each age group; we found that the death
+rate among patients living in Wuhan was higher than those not living in Wuhan 
+for age groups above 40. Again, the limitations of the data set prevented us 
+from concluding any significant impact the country of the case could have on 
+the death rate. Therefore, we found that living in Wuhan had the greatest 
+impact on the death rates within each age group. 
 
 ## V. Logistic Modeling to Classify Death
 
