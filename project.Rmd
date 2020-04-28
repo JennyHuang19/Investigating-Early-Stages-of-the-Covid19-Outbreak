@@ -608,7 +608,9 @@ Ultimately, a patient's gender, whether they visited Wuhan recently, and what
 country they are from doesn't seem to affect the 
 association between a patient's age group and their survival status from 
 COVID-19.
+
 ## II. Confidence Intervals for Each Age Group
+
 We will now focus on one's age, and its impact on death rate from COVID-19.
 For each age group, we will take bootstrap samples, calculate the mean 
 death rate, and obtain a 95% confidence interval for the true mean death rate 
@@ -865,19 +867,19 @@ to delineate "old" observations from "young" observations through the 60 years
 of age mark, as the mean age of deaths due to COVID-19 in our sample was
 approximately 68, and the mean age of survival was approximately 48. Ideally,
 we would have chosen 58 then, to be our cut-off age, but as our age group
-was defined to be 40-59, we chose 60 to be our cut-off age. In this 
-hypothesis test, our null hypothesis was that the proportion of deaths in
-both the younger and older groups would be equal. However, unlike our initial
-attempt in our data analysis section, here we will create a null distribution
-from the difference in mean death rates between our two groups, rather than
-a distribution of mean death rates for only the "young" group. Though
-computationally very similar, we felt this approach was more intuitive to read
-from a plot.
+was defined to be 40-59, we chose 60 to be our cut-off age. 
+However, unlike our initial attempt in our data analysis section, here we will
+create a null distribution from the difference in mean death rates between our
+two groups, rather than a distribution of mean death rates for only the "young"
+group. Though computationally very similar, we felt this approach was more
+intuitive to read from a plot.
+In this hypothesis test, our null hypothesis was that the proportion of deaths
+in both the younger and older groups would be equal. 
 $$H_0: p_{old} = p_{young}$$
 Our alternative hypothesis was that the true proportion of deaths ($p$), in
 the older population is greater than that of the younger age group.
 $$H_A: p_{old} > p_{young}$$
-```{r age hypothesis test, fig.width= 5, fig.height=4}
+```{r age hypothesis test, fig.width= 7, fig.height=6}
 set.seed(123)
 covid_age <- covid %>%
   mutate(young_old = ifelse(age < 60, "young", "old"))
@@ -1106,74 +1108,7 @@ from concluding any significant impact the country of the case could have on
 the death rate. Therefore, we found that living in Wuhan had the greatest 
 impact on the death rates within each age group. 
 
-## II. Mean Age of Affected Individuals
-mean age CI interval for those infected is closer to interval to those that 
-survive isn't the case that just older people are infected, those that are 
-infected usually survive but of those infected the ones who are older are the 
-ones that die (?)
-
-To help us further determine if there exists a relationship between age and 
-survival, we created 95% confidence intervals for the mean age of all patients, 
-the patients that survived, and the patients that died. The 95% confidence 
-interval for the surviving patients was slightly lower than the confidence 
-interval for all patients, whereas the confidence interval for the mean age of 
-patients who died was approximately 15 years higher than the others. 
-
-## III. Hypothesis Testing
-
-To answer our research question of whether age, gender, etc. affect survival
-outcome, hypothesis tests that compare the differences in mean
-death rates is effective, because this would give us the probabilitity
-that our observed difference in means are due to random chance alone, giving
-us a better sense of the variables most likely associated with death. It is
-slightly more rigorous than a confidence interval-based test, but is not
-perfect.
-For example, though we found all of our results to be statistically 
-significant, there is still a chance that we simply committed a type I 
-error, where we mistakenly rejected a true null hypothesis. Though an 
-$\alpha$ level of 0.05 limits this possibility, there is still a 5% chance such a mistake
-occurs.
-Another notable disability of our hypothesis tests are that they fail to find
-whether our variables of interest are linked in a causal relationship to
-death rate. Though we did find statistically significant differences in 
-death rates between some groups, the hypothesis test fails to identify whether
-such a difference is due to the variable in question itself, or some other
-"confounding" variable that we failed to recognize. So further analysis through
-logistic regression must be used to fully answer our question, as the results
-obtained from these tests, though meaningful, are incomplete.
-
-## IV. Logistic Modeling to Classify Death
-Through performing a logistic regression, we were able to create a classifier
-for survival status (death = yes or no). Through our logistic regression model,
-we saw that, holding all other variables constant, for each unit increase in 
-age, we would expect the log-odds of a covid case resulting in death to increase 
-by approximately 0.07870473. This pattern consistent with our hypothesis that
-cases where the patient is older have higher likelihoods of resulting in death.
-We also saw that, if a patient is male, we would expect the log-odds of a covid 
-case resulting in death to increase by approximately 1.40861782, which is 
-consistent with the trend of males having higher death rates. From the accuracy 
-of the classifier (90%) we created from our model, we determined that our 
-variables of interest are good predictors of death.
-
-To answer our research questions, implementing a logistic regression was
-appropriate, since our response variable (death) is categorical and our 
-predictor variables include both categorical and continuous variables. The 
-conditions to perform logistic regression are: 1. the observations are 
-independent of one another and 2. the predictors are not highly correlated. 
-Given the nature of disease spread, we cannot be certain that our observations 
-are independent from one another -- one case could have been linked to another. 
-Furthermore, there may be some correlation between predictor variables
-"from_wuhan" and "visited_wuhan," as people who visit wuhan are likely to be 
-from regions around Wuhan. These above-mentioned factors may act to lower the 
-reliability of our logistic model.
-
-Finally, there were several missing values present among each of the variables 
-of interest. Given that we filtered out these "NA" values before creating the
-model, we have to consider that the incompleteness of the data, which makes our 
-model our less accurate and representative of the true situation.
-
-
-## V. Confidence Intervals for Each Age Group
+## II. Confidence Intervals for Each Age Group
 Using bootstrapping, we were able to calculate 95% confidence intervals for the 
 mean death rate of each age group in our dataset. For the 0-19 age group, our 
 95% confidence interval was (.06, .09). For the 20-39 age group, our 95% 
@@ -1205,6 +1140,73 @@ includes 32 patients. The width of the 95% confidence interval for the 0-19
 age group was around .03, which is much smaller than .11, indicating that 
 there is more variation in death rate within the 80-99 year old age group than 
 variation in death rate within the 0-19 year old age group. 
+
+## III. Mean Age of Affected Individuals
+mean age CI interval for those infected is closer to interval to those that 
+survive isn't the case that just older people are infected, those that are 
+infected usually survive but of those infected the ones who are older are the 
+ones that die (?)
+
+To help us further determine if there exists a relationship between age and 
+survival, we created 95% confidence intervals for the mean age of all patients, 
+the patients that survived, and the patients that died. The 95% confidence 
+interval for the surviving patients was slightly lower than the confidence 
+interval for all patients, whereas the confidence interval for the mean age of 
+patients who died was approximately 15 years higher than the others. 
+
+## IV. Hypothesis Testing
+
+To answer our research question of whether age, gender, etc. affect survival
+outcome, hypothesis tests that compare the differences in mean
+death rates is effective, because this would give us the probabilitity
+that our observed difference in means are due to random chance alone, giving
+us a better sense of the variables most likely associated with death. It is
+slightly more rigorous than a confidence interval-based test, but is not
+perfect.
+For example, though we found all of our results to be statistically 
+significant, there is still a chance that we simply committed a type I 
+error, where we mistakenly rejected a true null hypothesis. Though an 
+$\alpha$ level of 0.05 limits this possibility, there is still a 5% chance such a mistake
+occurs.
+Another notable disability of our hypothesis tests are that they fail to find
+whether our variables of interest are linked in a causal relationship to
+death rate. Though we did find statistically significant differences in 
+death rates between some groups, the hypothesis test fails to identify whether
+such a difference is due to the variable in question itself, or some other
+"confounding" variable that we failed to recognize. So further analysis through
+logistic regression must be used to fully answer our question, as the results
+obtained from these tests, though meaningful, are incomplete.
+
+## V. Logistic Modeling to Classify Death
+
+Through performing a logistic regression, we were able to create a classifier
+for survival status (death = yes or no). Through our logistic regression model,
+we saw that, holding all other variables constant, for each unit increase in 
+age, we would expect the log-odds of a covid case resulting in death to increase 
+by approximately 0.07870473. This pattern consistent with our hypothesis that
+cases where the patient is older have higher likelihoods of resulting in death.
+We also saw that, if a patient is male, we would expect the log-odds of a covid 
+case resulting in death to increase by approximately 1.40861782, which is 
+consistent with the trend of males having higher death rates. From the accuracy 
+of the classifier (90%) we created from our model, we determined that our 
+variables of interest are good predictors of death.
+
+To answer our research questions, implementing a logistic regression was
+appropriate, since our response variable (death) is categorical and our 
+predictor variables include both categorical and continuous variables. The 
+conditions to perform logistic regression are: 1. the observations are 
+independent of one another and 2. the predictors are not highly correlated. 
+Given the nature of disease spread, we cannot be certain that our observations 
+are independent from one another -- one case could have been linked to another. 
+Furthermore, there may be some correlation between predictor variables
+"from_wuhan" and "visited_wuhan," as people who visit wuhan are likely to be 
+from regions around Wuhan. These above-mentioned factors may act to lower the 
+reliability of our logistic model.
+
+Finally, there were several missing values present among each of the variables 
+of interest. Given that we filtered out these "NA" values before creating the
+model, we have to consider that the incompleteness of the data, which makes our 
+model our less accurate and representative of the true situation.
 
 ## VI. Reliability and Validity of Data
 Throughout our data exploration, we were unable to conclude whether or not 
