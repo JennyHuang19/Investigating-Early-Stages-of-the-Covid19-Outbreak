@@ -45,7 +45,7 @@ covid <- covid %>%
          death = ifelse(death == 0, "No", "Yes"))
 ```
 
-```{r add age group, echo = FALSE}
+```{r add-age-group, echo = FALSE}
 covid <- covid %>%
   mutate(age_group = ifelse(age < 20, "0-19", (ifelse(age <40, "20-39",
   ifelse(age < 60, "40-59", ifelse(age < 80, "60-79", "80-99"))))))%>%
@@ -460,16 +460,22 @@ glimpse(covid)
 
 ## I. Confidence Intervals for Each Age Group
 
-We will now focus on one's age, and its impact on death rate from COVID-19.
+First, we will focus on one's age, and its impact on death rate from COVID-19.
 For each age group, we will take bootstrap samples, calculate the mean 
 death rate, and obtain a 95% confidence interval for the true mean death rate 
 of that particular age group to see if the mean death rates overlap for each 
 age group. To do so, we must assume that our sample is representative 
-of the population. Additionally, in all age groups, there are more than 
-5 observations from our original sample, so, our original sample 
+of the population. Additionally, as seen below, in all age groups, there are 
+more than 5 observations from our original sample, so, our original sample 
 for each confidence interval is greater than 5 for all cases, so it is not 
 too small. Since our original sample is not too small and is representative 
 of the population, we can create a bootstrap confidence interval.
+
+```{r age-group-counts}
+covid%>%
+  filter(age_group != "NA")%>%
+  count(age_group)
+```
 
 First, we will create a 95% confidence interval for population mean death rate 
 of individuals between 0 and 19 who are infected with COVID-19. As seen below, 
@@ -591,23 +597,29 @@ The confidence intervals all seem to overlap, so we cannot claim that there
 is significant difference between the mean death rate of individuals in the 
 different age groups. However, the upper end of the confidence interval for 
 the oldest age group, 80 to 99 year old patients, is at least .07 higher 
-than the upper end of the confidence intervals for any other age group.
+than the upper end of the confidence intervals for any other age group. We 
+will discuss this further in our discussion. 
 
 ## II. Mean Age of Affected Individuals
 
 Now, rather than comparing confidence intervals for each age group, we will
-attampt to compare confidence intervals for the mean age of each disease
+attempt to compare confidence intervals for the mean age of each disease
 outcome. This will show us how age impacts disease outcomes.
 We will create a 95% confidence interval for the population mean age of 
 individuals infected with COVID-19, the population mean age of those infected 
 with COVID-19 who survive, and the population mean age of those infected with
 COVID-19 who die. To do so, we must assume that our sample is representative 
 of the population. Additionally, in all three cases, there are more than 
-5 observations in our original sample, since our data includes 1085 total 
+5 observations in our original sample, since our dataset includes 1085 total 
 infected patients, 1022 alive patients, and 63 dead patients, so, our original 
 sample is greater than 5 for all cases, so it is not too small. Since our 
 original sample is not too small and is representative of the population, 
 we can create a bootstrap confidence interval.
+
+```{r outcome-group-counts}
+covid%>%
+  count(death)
+```
 
 First, we will create a 95% confidence interval for the population mean age of 
 individuals infected with COVID-19. As seen below, we are 95% confident that 
@@ -616,7 +628,6 @@ the actual population mean age of infected individuals is between
 
 ```{r age_conf_int_total, fig.height=5, fig.width=5}
 age_boot_dist <- covid %>%
-  #filter(death == "No") %>%
   specify(response = age) %>%
   generate(reps = 5000, type = "bootstrap") %>%
   calculate(stat = "mean")
@@ -641,7 +652,6 @@ Now, we will create a 95% confidence interval for the population mean age of
 individuals infected with COVID-19 who survive. As seen below, we are 95% 
 confident that the actual population mean age of infected individuals who 
 survive COVID-19 is between 46.82 and 49.30.	
-
 
 ```{r age_conf_int_alive, fig.height=5, fig.width=5}
 age_boot_dist_alive <- covid %>%
@@ -718,30 +728,42 @@ of age mark, as the mean age of deaths due to COVID-19 in our sample was
 approximately 68, and the mean age of survival was approximately 48. Ideally,
 we would have chosen 58 then, to be our cut-off age, but as our age group
 was defined to be 40-59, we chose 60 to be our cut-off age. 
-However, unlike our initial attempt in our data analysis section, here we will
+
+Unlike our initial attempt in our data analysis section, here we will
 create a null distribution from the difference in mean death rates between our
 two groups, rather than a distribution of mean death rates for only the "young"
 group. Though computationally very similar, we felt this approach was more
 intuitive to read from a plot.
+
 In this hypothesis test, our null hypothesis was that the proportion of deaths
 in both the younger and older groups would be equal. 
+
 $$H_0: p_{old} = p_{young}$$
-Our alternative hypothesis was that the true proportion of deaths ($p$), in
-the older population is greater than that of the younger age group.
+
+Our alternative hypothesis was that the true proportion of deaths ($p_{old}$) 
+in the older population is greater than the true proportion of deaths
+($p_{young}$) in the younger age group.
+
 $$H_A: p_{old} > p_{young}$$
 ```{r age hypothesis test, fig.width= 7, fig.height=6}
 set.seed(123)
+
 covid_age <- covid %>%
+  filter(!is.na(age))%>%
   mutate(young_old = ifelse(age < 60, "young", "old"))
+
 diff_props <- covid_age %>%
   specify(death ~ young_old, success = "Yes") %>%
   calculate(stat = "diff in props", order = c("old", "young"))
+
 diff_props
+
 null_dist_prop <- covid_age %>% 
    specify(death ~ young_old, success = "Yes") %>%
    hypothesize(null = "independence") %>% 
    generate(reps = 2000, type = "permute") %>% 
    calculate(stat = "diff in props", order = c("old", "young"))
+
 null_dist_prop %>% 
    get_p_value(obs_stat = diff_props, direction = "greater")
 
@@ -762,32 +784,39 @@ meaning we can reject our null hypothesis, as this is less than our $\alpha$
 level of 0.05. This p-value means that assuming there is no difference in the
 death rates of these two groups, the probability that the difference in death
 rate between older and younger people is 0.147 or more, which is what we
-observed in our sample data, is essentially 0. So, we can say that there the
+observed in our sample data, is essentially 0. So, we can say that the
 death rate due to COVID-19 of people aged 60 or older is significantly higher
 than that of people younger than the age of 60. This makes intuitive sense
 from the plot depicted above as well, as the red line indicating our sample
 difference in death rate is significantly higher than the null distribution.
 
-
 To test the effect of gender, we will calculate the difference in the
 proportion of deaths between men and women in our sample. Our null hypothesis
 is that there is no difference in the proportions of deaths between genders:
+
 $$H_0: p_{male} = p_{female}$$
+
 Our alternative hypothesis is that the proportion of deaths between the two
 genders is not equal:
+
 $$ H_A: p_{male} \neq p_{female}$$
 ```{r gender hypothesis test}
 set.seed(1)
-diff_props <- covid %>%
+
+diff_props_2 <- covid %>%
+  filter(!is.na(gender))%>%
   specify(death ~ gender, success = "Yes") %>%
   calculate(stat = "diff in props", order = c("male", "female"))
-null_dist_prop <- covid %>% 
+
+null_dist_prop_2 <- covid %>% 
+  filter(!is.na(gender))%>%
    specify(death ~ gender, success = "Yes") %>%
    hypothesize(null = "independence") %>% 
    generate(reps = 1000, type = "permute") %>% 
    calculate(stat = "diff in props", order = c("male", "female"))
-null_dist_prop %>% 
-   get_p_value(obs_stat = diff_props, direction = "two_sided")
+
+null_dist_prop_2 %>% 
+   get_p_value(obs_stat = diff_props_2, direction = "two_sided")
   
 ```
 
@@ -798,20 +827,25 @@ men and women is significantly different.
 
 Similarly, we conducted a simulation-based hypothesis test for whether a person
 is from Wuhan, using the following hypotheses:
+
 $$H_0: p_{from Wuhan} = p_{not from Wuhan}$$
 $$H_A: p_{from Wuhan} \neq p_{not from Wuhan}$$
 
 ```{r wuhan hypothesis test}
-diff_props <- covid %>%
+diff_props_3 <- covid %>%
+  filter(!is.na(from_wuhan))%>%
   specify(death ~ from_wuhan, success = "Yes") %>%
   calculate(stat = "diff in props", order = c("1", "0"))
-null_dist_prop <- covid %>% 
+
+null_dist_prop_3 <- covid %>% 
+  filter(!is.na(from_wuhan))%>%
    specify(death ~ from_wuhan, success = "Yes") %>%
    hypothesize(null = "independence") %>% 
    generate(reps = 1000, type = "permute") %>% 
    calculate(stat = "diff in props", order = c("1", "0"))
-null_dist_prop %>% 
-   get_p_value(obs_stat = diff_props, direction = "two_sided")
+
+null_dist_prop_3 %>% 
+   get_p_value(obs_stat = diff_props_3, direction = "two_sided")
 ```
 
 Here, our p-value was 0, meaning that we have enough evidence to reject our
@@ -819,14 +853,16 @@ null hypothesis. This means that there is a significant difference in
 the proportion of deaths between people from Wuhan and people not from Wuhan.
 
 ## IV. Conditional Probabilities
-Given our results from hypothesis testing, to find causual relationships 
+Given our results from hypothesis testing, to find causal relationships 
 between our aforementioned variables of interest and death rate, we must
 first calculate the conditional probability of P(Death | Age) for 
 each age group and determine if there are any confounding variables: 
-gender, visited_wuhan, from_wuhan, country. Below, we calculate and visualize 
-P(Dead|Age Group). From the visualization, we see that P(Dead|Age Group) 
-increases as the age groups increase. For this part, we will filter out any 
-patients with unrecorded ages in our data set, as we will not be able to take 
+gender, visited_wuhan, from_wuhan, country. 
+
+Below, we calculate and visualize P(Dead|Age Group). From the visualization, 
+we see that P(Dead|Age Group) increases as the age groups increase. 
+For this section of our methods, we will filter out any patients with 
+unrecorded ages in our data set, as we will not be able to take 
 these into consideration with calculating P(Death | Age). 
 
 ```{r P(Dead|AgeGroup), fig.height=5, fig.width=5}
@@ -919,13 +955,13 @@ explanation of our data. As seen in the calculation and visualization of
 P(Dead|Age Group) below, P(Dead|Age Group) increases as the age groups increase 
 for patients that live in Wuhan and patients that don't live in Wuhan. 
 Interestingly, for patients that live in Wuhan, P(Dead|Age Group) is higher 
-for all age groups over 40 years old than for patients that don't live in 
-Wuhan. For 80-99 year old patients in our dataset, 100% of them who live in 
-Wuhan have died, while only 17% of them who don't live in Wuhan have died. 
-Keep in mind, the majority of patients in our data set are not from Wuhan and 
-only 14% indicated that they lived in Wuhan. However, all 11 of the 80-99 year 
-old patients from Wuhan died while only 5 of the 24 80-99 year old patients 
-who were not from Wuhan died. 
+for all age groups over 40 years old than P(Dead|Age Group) for patients that 
+don't live in Wuhan. For 80-99 year old patients in our dataset, 
+100% of them who live in Wuhan have died, while only 17% of them who don't 
+live in Wuhan have died. Keep in mind, the majority of patients in our data 
+set are not from Wuhan and only 14% indicated that they lived in Wuhan. 
+However, all 11 of the 80-99 year old patients from Wuhan died while only 
+5 of the 24 80-99 year old patients who were not from Wuhan died. 
 
 ```{r P(Dead|AgeGroup)_from_wuhan, fig.height=5, fig.width=7}
 covid_condprob %>%
@@ -953,7 +989,7 @@ ggplot(mapping = aes(x = age_group, fill = death)) +
 Now, we will divide the patients in our data by country, allowing us to 
 consider country of origin as a possible explanation of our data. We will only 
 consider countries with recorded deaths in our data set. Note: we filtered 
-any patients with unrecorded ages, these deaths are not included. As seen in 
+any patients with unrecorded ages, so these deaths are not included. As seen in 
 the calculation and visualization of P(Dead|Age Group) for each country below, 
 P(Dead|Age) for each country group never decreases as age increases. However, 
 we do not have enough data for each country to properly visualize P(Dead|Age) 
@@ -988,9 +1024,8 @@ with Recorded Deaths") +
 ```
 
 Ultimately, a patient's gender, whether they visited Wuhan recently, and what 
-country they are from doesn't seem to affect the 
-association between a patient's age group and their survival status from 
-COVID-19.
+country they are from doesn't seem to affect the association between a 
+patient's age group and their survival status from COVID-19.
 
 ## V. Logistic Modeling to Classify Death
 
@@ -1037,9 +1072,10 @@ true_type <- covid_test %>%
   pull(death)
 ```
 
-The R function glm() requires for logistic regression that the response variable 
-takes on values of 0 or 1. Create a new variable in the training dataset named 
-bin_type that is 0 if the patient did not die, and 1 if the patient died.
+The R function glm() requires for logistic regression that the response 
+variable takes on values of 0 or 1. We will create a new variable in the 
+training dataset named bin_type that is 0 if the patient did not die, and 1 
+if the patient died.
 
 ```{r create-logit-data}
 covid_train_log <- covid_train %>% 
@@ -1081,7 +1117,8 @@ approximately 2.37039736. This is consistent with the finding in our hypothesis
 test, that there is a significant difference in proportion of deaths between 
 people from Wuhan and people not from Wuhan.
 
-Here, we created a classifier with the cut-off value of 0.5.
+Here, we created a classifier with the cut-off value of 0.5. We will display 
+the first 15 classifications:
 
 ```{r classifier}
 pred_log_odds <- augment(logit_mod, newdata = covid_test) %>%
@@ -1100,7 +1137,8 @@ for (i in 1:100){
   classified_types[i] <- if_else(pred_probs[i] > .5, "Yes", "No")
 }
 
-tibble(pred_probs, classified_types)
+tibble(pred_probs, classified_types)%>%
+  slice(1:15)
 mean(classified_types == true_type)
 ```
 
@@ -1117,8 +1155,8 @@ mean death rate of each age group in our dataset. For the 0-19 age group, our
 95% confidence interval was (.06, .09). For the 20-39 age group, our 95% 
 confidence interval was (.04, .07). For the 40-59 age group, our 95% confidence 
 interval was (.03, .07). For the 60-79 age group, our 95% confidence interval 
-was (.03, .08).  Finally, for the 80-99 age group, our 95% confidence interval 
-was (.05, .16).  These intervals all overlap, so we cannot claim that there is 
+was (.03, .08). Finally, for the 80-99 age group, our 95% confidence interval 
+was (.05, .16). These intervals all overlap, so we cannot claim that there is 
 a significant difference in mean death rate between patients in different age 
 groups. 
 
@@ -1127,7 +1165,7 @@ includes higher death rates than the intervals for younger age groups. This
 does not mean that the true mean death rate for 80-99 year olds is higher than 
 other age groups. However, we are 95% confident that the true mean death rate 
 for 80-99 year olds is contained in an interval that includes higher death 
-rates than the 95% confidence intervals for other age groups. 
+rates than the 95% confidence intervals for younger age groups. 
 
 Additionally, we see that the width of the 95% confidence intervals for the 
 0-19, 20-39, 40-59, and 60-79 age groups range from around .03 to .05, 
@@ -1155,61 +1193,64 @@ patients who died was approximately 15 years higher than the others.
 
 ## III. Hypothesis Testing
 
-To answer our research question of whether age, gender, etc. affect survival
-outcome, hypothesis tests that compare the differences in mean
-death rates is effective, because this would give us the probabilitity
-that our observed difference in means are due to random chance alone, giving
-us a better sense of the variables most likely associated with death. It is
-slightly more rigorous than a confidence interval-based test, but is not
-perfect.
+To answer our research question of whether age, gender, and other variables 
+affect survival outcome, the hypothesis tests we created to compare the 
+differences in mean death rates is effective because it gives us the 
+probability that our observed difference in means is due to random chance 
+alone, giving us a better sense of the variables most likely associated with 
+death. It is slightly more rigorous than a confidence interval-based test, 
+but it is still not perfect.
+
 For example, though we found all of our results to be statistically 
 significant, there is still a chance that we simply committed a type I 
 error, where we mistakenly rejected a true null hypothesis. Though an 
-$\alpha$ level of 0.05 limits this possibility, there is still a 5% chance such a mistake
-occurs.
-Another notable disability of our hypothesis tests are that they fail to find
+$\alpha$ level of 0.05 limits this possibility, there is still a 5% chance 
+such a mistake occurs.
+
+Another notable disability of our hypothesis tests is that they fail to find
 whether our variables of interest are linked in a causal relationship to
 death rate. Though we did find statistically significant differences in 
 death rates between some groups, the hypothesis test fails to identify whether
 such a difference is due to the variable in question itself, or some other
-"confounding" variable that we failed to recognize. So further analysis through
-logistic regression must be used to fully answer our question, as the results
-obtained from these tests, though meaningful, are incomplete.
+"confounding" variable that we failed to recognize. So, further analysis 
+through logistic regression must be used to fully answer our question, 
+as the results obtained from these tests, though meaningful, are incomplete.
 
 ## IV. Conditional Probabilities
 
 In the early stages of our data analysis, we found that the death rates for 
 each age group increased as the ages increased, so we explored the impact of a 
-variety of variables on the death rate per age group. For each of the potential 
-explanatory variables, we analyzed the proportion of patients that died, 
-grouping them by the categories of the variable. First, we investigated whether 
-gender was a possible confounding variable to explain the increase in death 
-rates among the age groups. Upon examining the proportions of dead patients per 
-age group faceted by gender,  it became clear that the gender was not a 
-confounding variable. Although we wanted to determine if patients visiting
-Wuhan had an impact on the death rate, only 18% of patients indicated that they 
-had visited Wuhan, so the data for this relationship was insufficient to reach 
-any conclusions. Next, we looked into the impact of the patients living in
-Wuhan on the survival rate within each age group; we found that the death
-rate among patients living in Wuhan was higher than those not living in Wuhan 
-for age groups above 40. Again, the limitations of the data set prevented us 
-from concluding any significant impact the country of the case could have on 
-the death rate. Therefore, we found that living in Wuhan had the greatest 
-impact on the death rates within each age group. 
+variety of variables on the death rate of each age group. For each of the 
+potential explanatory variables, we analyzed the proportion of patients that 
+died, grouping them by the categories of the variable. First, we investigated 
+whether gender was a possible confounding variable to explain the increase in 
+death rates among the age groups. Upon examining the proportions of dead 
+patients per age group faceted by gender, it seemed as though gender was 
+not a confounding variable. Although we wanted to determine if patients 
+visiting Wuhan had an impact on the death rate, only 18% of patients indicated 
+that they had visited Wuhan, so the data for this relationship was insufficient 
+to reach any conclusions. Next, we looked into the impact of the patients 
+living in Wuhan on the survival rate within each age group; we found that the 
+death rate among patients living in Wuhan was higher than those not living in 
+Wuhan for age groups above 40. Again, the limitations of the data set
+prevented us from concluding any significant impact the country of the case 
+could have on the death rate. Therefore, we found that living in Wuhan had 
+the greatest impact on the death rates within each age group, especially 
+for the oldest age group. 
 
 ## V. Logistic Modeling to Classify Death
 
 Through performing a logistic regression, we were able to create a classifier
-for survival status (death = yes or no). Through our logistic regression model,
-we saw that, holding all other variables constant, for each unit increase in 
+for survival status (death = yes or no). Through our logistic regression model, 
+we saw that, holding all other variables constant, for each unit increase in
 age, we would expect the log-odds of a covid case resulting in death to increase 
-by approximately 0.07870473. This pattern consistent with our hypothesis that
-cases where the patient is older have higher likelihoods of resulting in death.
-We also saw that, if a patient is male, we would expect the log-odds of a covid 
-case resulting in death to increase by approximately 1.40861782, which is 
-consistent with the trend of males having higher death rates. From the accuracy 
-of the classifier (90%) we created from our model, we determined that our 
-variables of interest are good predictors of death.
+by approximately 0.07870473. This pattern was consistent with our hypothesis 
+that cases in which the patient is older have higher likelihoods of resulting 
+in death. We also saw that, if a patient is male, we would expect the log-odds 
+of a covid case resulting in death to increase by approximately 1.40861782, 
+which is consistent with the trend of males having higher death rates.
+From the accuracy of the classifier (90%) we created from our model, we 
+determined that our variables of interest are good predictors of death.
 
 To answer our research questions, implementing a logistic regression was
 appropriate, since our response variable (death) is categorical and our 
@@ -1217,7 +1258,7 @@ predictor variables include both categorical and continuous variables. The
 conditions to perform logistic regression are: 1. the observations are 
 independent of one another and 2. the predictors are not highly correlated. 
 Given the nature of disease spread, we cannot be certain that our observations 
-are independent from one another -- one case could have been linked to another. 
+are independent from one another-- one case could have been linked to another. 
 Furthermore, there may be some correlation between predictor variables
 "from_wuhan" and "visited_wuhan," as people who visit wuhan are likely to be 
 from regions around Wuhan. These above-mentioned factors may act to lower the 
@@ -1225,52 +1266,58 @@ reliability of our logistic model.
 
 Finally, there were several missing values present among each of the variables 
 of interest. Given that we filtered out these "NA" values before creating the
-model, we have to consider that the incompleteness of the data, which makes our 
+model, we have to consider that the incompleteness of the data makes our 
 model our less accurate and representative of the true situation.
 
 ## VI. Reliability and Validity of Data
-Throughout our data exploration, we were unable to conclude whether or not 
+Throughout our data exploration, we were often unable to conclude whether  
 there were correlations among different variables and the death rates because 
 often there was insufficient data to do so. Even though our dataset included 
 over 1,000 observations, many of these observations did not include values 
 for all 17 variables. Many patients in our dataset had unidentified gender and 
 age which made it hard to determine whether these variables impacted patient 
-survival status, since we couldn’t consider these observations. Additionally, 
+survival status since we couldn’t consider these observations. Additionally, 
 in creating confidence intervals and performing hypothesis tests, we had to 
-assume that our dataset was  representative of the population. However, 
+assume that our dataset was representative of the population. However, 
 COVID-19 is a pandemic that infects hundreds of people every day. Thus, any 
 dataset including COVID-19 patients becomes quickly outdated as the virus 
-spreads and infects more individuals. Additionally, the impacts of a virus 
+spreads and infects more individuals. Also, the impacts of a virus 
 varies based on individuals' situations. Countries have different medical 
 resources, climates, and populations. So, it is hard to determine if our 
-dataset is representative of an overall population that varies itself. 
+dataset is representative of an overall population that varies within itself. 
 Ultimately, due to the difficulties in obtaining reliable, complete and valid 
-data about a global pandemic, we proceeded with caution when performing our 
-statistical analysis, keeping these limitations in mind. 
+data about a real, current global pandemic, we proceeded with caution when 
+performing our statistical analysis, keeping these limitations in mind. 
 
 ## VII. Next Steps
 
-If we were to start over on this project, we would pick a data frame with more 
+If we were to start over on this project, we would pick a data set with more 
 observations outside of China. For example, when considering country of origin 
 as a possible determiner of death rate, we did not have enough data for each 
-country to properly visualize P(Dead|Age) for each country. Furthermore, since 
-our research question focused on whether age was a determiner of death rate, 
-age could easily have been confounded with other variables such as heart 
-disease or diabetes status. Next time, we would find a data set containing this 
-information. Finally, another method we could have used to determine the 
-significance of each explanatory variable on death rate would be inference for 
-regression. The next steps we would do to continue this project would be to 
-update the data frame with current COVID-19 data. Our data frame is small, 
-contains very few data points outside of China, and only focuses on the early 
-days of the pandemic (from Jan. - Feb.) The vast amount of data that has since 
-been added about the pandemic would provide more reliable conclusions to our 
-research questions, surrounding whether death outcome is correlated with 
+country to properly visualize P(Dead|Age) for each country. More inclusive and 
+larger data sets about COVID-19 are easier accessible now, but they weren't 
+when we started this project. Furthermore, since our research question focused 
+on whether age was a determiner of death rate, age could easily have been 
+confounded with other variables such as heart disease or diabetes status or 
+other pre-existing health conditions. Next time we explore the COVID-19 
+death rates, we would find a data set containing more information about 
+underlying health issues and a wider set of patients from more regions. 
+Finally, another method we could have used to determine the significance of 
+each explanatory variable on death rate would be inference for regression. 
+The next steps we would do to continue this project would be to update the 
+data frame with current COVID-19 data. Our data frame is small, contains very 
+few data points outside of China, and only focuses on the early days of the 
+pandemic (from Jan. - Feb.) The vast amount of data that has since been added 
+and collected about the pandemic would provide more reliable conclusions to our 
+research questions surrounding whether death outcome is correlated with 
 factors like age and gender. Moreover, given that there are very few data 
 points outside of Asian countries, we were unable to draw meaningful 
-conclusions to our research questions outside of these countries; it would be 
-interesting to find whether our conclusions would hold in the U.S. and Europe. 
-Ideally, we would want to create a way to update our data so that our analyses 
-are done on real time data.
+conclusions to our research questions outside of these countries. Thus, 
+our exploration cannot be extended accurately to the global population. 
+It would be interesting to find whether our conclusions would hold in the 
+U.S. and Europe, now that COVID-19 has spread to other countries around the 
+globe. Ideally, we would want to create a way to update our data so that our 
+analyses can be done and adjusted on real time data as the pandemic progresses.
 
 
 
