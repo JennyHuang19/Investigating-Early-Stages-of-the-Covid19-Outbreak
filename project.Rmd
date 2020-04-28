@@ -3,6 +3,7 @@ title: "Investigating Early Stages of the COVID-19 Outbreak"
 author: 'Team 2: Delaney Demark, Jenny Huang, Abby Mapes, Harshavardhan Srijay'
 subtitle: 'Due: Wednesday April 29th'
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 ---
@@ -50,9 +51,6 @@ covid <- covid %>%
   mutate(age_group = ifelse(age < 20, "0-19", (ifelse(age <40, "20-39",
   ifelse(age < 60, "40-59", ifelse(age < 80, "60-79", "80-99"))))))%>%
   mutate(age_group = ifelse(is.na(age_group), "NA", age_group))
-
-covid %>% 
-  count(country)
 ```
 
 # Section 1: Introduction
