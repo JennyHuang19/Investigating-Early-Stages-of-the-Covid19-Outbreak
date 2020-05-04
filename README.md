@@ -1,6 +1,4 @@
-# project-team_2_exclamation_mark
-
-Investigating Early Stages of the COVID-19 Outbreak
+## Investigating Early Stages of the COVID-19 Outbreak
 
 Many reports have indicated that older individuals experience more severe 
 symptoms of COVID-19; in response, this project explores the relationship 
